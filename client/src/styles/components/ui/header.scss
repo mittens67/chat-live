@@ -1,0 +1,39 @@
+.nav {
+    &-btn {
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+
+        &__text {
+            margin-left: 2px;
+        }
+    }
+}
+
+.nav-container {
+    display: flex;
+}
+
+//This is overwriting Bootstrap CSS so dropdown does not overflow. See if there is a better way to do this later
+.dropdown-menu {
+    right: 0 !important;
+    left: auto !important;
+}
+
+.avatar {
+    vertical-align: middle;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+ }
+
+
+@media screen and (max-width: 576px) {
+    .nav {
+        &-btn {
+            &__text {
+                display: none;
+            }
+        }
+    }
+}

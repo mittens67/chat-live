@@ -1,0 +1,28 @@
+.list {
+    &-item {
+        cursor: pointer;
+        background-color: #FEF3E2;
+        margin: .5rem 0;
+        height: 5rem;
+        align-items: center;
+        padding: .5rem;
+
+        &:hover {
+            background-color: #BEC6A0;
+        }
+    }
+
+    &-info {
+        display: flex;
+        flex-direction: column;
+
+        &__name {
+            color: #708871;
+            font-weight: bold;
+        }
+
+        &__email {
+            font-weight: lighter;
+        }
+    }
+}
