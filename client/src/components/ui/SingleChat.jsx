@@ -20,7 +20,8 @@ import io from 'socket.io-client';
 
 
 
-const ENDPOINT = "http://localhost:3000";
+//const ENDPOINT = "http://localhost:3000"; //dev
+const ENDPOINT = "https://chat-live-qziv.onrender.com/"; //prod
 let socket, selectedChatCompare;
 
 const SingleChat = ({ fetchAgain, setFetchAgain }) => {
