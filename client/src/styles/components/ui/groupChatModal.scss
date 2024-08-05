@@ -1,0 +1,20 @@
+.groupModal {
+  &-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #708871;
+  }
+
+  &-btn {
+    background-color: #708871;
+    border: none;
+    font-weight: bold;
+    border: 0.1rem solid #bec6a0;
+
+    &:hover {
+      background-color: #bec6a0;
+      color: #606676;
+      border: 0.1rem solid #708871;
+    }
+  }
+}

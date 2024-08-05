@@ -24,3 +24,31 @@
         justify-content: space-between;
     }
 }
+
+
+.singleChat {
+    &-blank {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        & p {
+            font-size: 2rem;
+            color: #708871;
+            
+        }
+    }
+    &-header {
+        display: flex;
+        //width: 100%;
+        justify-content: space-between;
+        align-items: center;
+
+        & p {
+            font-size: 1.7rem;
+            color: #708871;
+            font-weight: bold;
+        }
+    }
+}

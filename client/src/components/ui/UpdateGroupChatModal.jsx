@@ -10,6 +10,8 @@ import Form from "react-bootstrap/Form";
 import InputGroup from "react-bootstrap/InputGroup";
 import Loading from "./Loading";
 import UserListItem from "./UserListItem";
+import "../../styles/components/ui/modal.scss";
+import { FaEdit } from "react-icons/fa";
 
 const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
   const [show, setShow] = useState(false);
@@ -151,7 +153,7 @@ const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
 
   return (
     <>
-      <Button onClick={handleShow}>Helle</Button>
+      <Button className="modal-btn" onClick={handleShow}><FaEdit/></Button>
 
       <Modal show={show} centered onHide={handleClose}>
         <Modal.Header closeButton className="border-0 text-center">

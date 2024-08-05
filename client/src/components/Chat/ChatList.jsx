@@ -40,12 +40,12 @@ const ChatList = ({fetchAgain}) => {
 
   return (
     <>
-    <Container style={{ height: "100%", backgroundColor: "white"}}  >
+    <Container fluid style={{ height: "100%", backgroundColor: "white"}}  >
         <Row>
-          <Col className="d-flex">
-            <p>My Chats</p>
+          <Col className="d-flex justify-content-between pt-2">
+            <p className="chatList-title">My Chats</p>
             <GroupChatModal>
-            <Button>
+            <Button className="chatList-btn">
               New Group Chat
             </Button>
             </GroupChatModal>
@@ -56,7 +56,7 @@ const ChatList = ({fetchAgain}) => {
             <Row>
               {
                 chats.map((chat) => (
-                  <Col xs={12} className={selectedChat === chat? "chat selected" : "chat"} onClick={() => setSelectedChat(chat)}  key={chat._id}>
+                  <Col xs={12} className={selectedChat === chat? "chatList-chat chatList-selected" : "chatList-chat"} onClick={() => setSelectedChat(chat)}  key={chat._id}>
                         {
                           !chat.isGroupChat ? `${(getSender(loggedUser, chat.users))}` : `${chat.chatName}`
                         }       

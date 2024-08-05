@@ -1,15 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import axios from 'axios';
 
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 import FloatingLabel from "react-bootstrap/FloatingLabel";
 import { ChatState } from "../../context/ChatProvider";
-//import Toast from 'react-bootstrap/Toast';
+import "../../styles/auth.scss";
+
 
 const Register = ({ toggleLogin }) => {
-  const [validated, setValidated] = useState(false);
   const [userName, setUserName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,8 +27,7 @@ const Register = ({ toggleLogin }) => {
     setLoading(true);
 
     if(pics === undefined) {
-      //Add toast logic
-      console.log(`no image`);
+      toast.error("No Image Provided");
       setLoading(false);
       return;
     }
@@ -41,7 +41,6 @@ const Register = ({ toggleLogin }) => {
         method: 'post', body: data
       }).then((res) => res.json()).then(data => {
         setPic(data.url.toString());
-        //console.log(data.url.toString());
         setLoading(false);
       }).catch(err => {
         console.log(err);
@@ -49,7 +48,7 @@ const Register = ({ toggleLogin }) => {
       });
     } else {
       console.log(`image upload failure`);
-      //Add toast logic
+      toast.error("Failed to upload image!");
       setLoading(false);
       return;
     }
@@ -62,20 +61,17 @@ const Register = ({ toggleLogin }) => {
     setLoading(true);
 
     if (!userName || !email || !password || !confirmPassword) {
-      //toast logic here
-      console.log(`fields cannot be empty`);
+      toast.error("Please Fill All The Fields marked with \(*\)");
       setLoading(false);
       return;
     }
     if(password !== confirmPassword) {
-      //add toast logic
-      console.log(`passwords do not match`);
+      toast.error("Password and Confirm Password do not match!");
       setLoading(false);
       return;
     }
 
     try {
-      console.log('trying post');
       const config = {
         headers: {
           "Content-type": "application/json",
@@ -92,29 +88,20 @@ const Register = ({ toggleLogin }) => {
         config
       );
 
-      //Add success toast logic
-      console.log(`registration success!`)
+      toast.success("Registration Successful!");
       localStorage.setItem("userInfo", JSON.stringify(data));
       setUser(data);
       setLoading(false);
       navigate('/chats');
     } catch(err) {
-      //add toast logic
-      console.log(`error occured ${err}`);
+      toast.error("Registration failed!");
       setLoading(false);
     }
-    // const form = event.currentTarget;
-    // if (form.checkValidity() === false) {
-    //   event.preventDefault();
-    //   event.stopPropagation();
-    // }
-
-    // setValidated(true);
   };
 
   return (
-    <Form noValidate className="d-grid gap-2" validated={validated}>
-      <h1>Register</h1>
+    <Form className="d-grid gap-2">
+      <h1 className="auth-form__title">Register</h1>
       <FloatingLabel controlId="username" label="Username*" className="mb-3">
         <Form.Control
           required
@@ -170,9 +157,9 @@ const Register = ({ toggleLogin }) => {
         <Form.Control.Feedback type="invalid">Invalid Password</Form.Control.Feedback>
       </FloatingLabel>
 
-      <Button type="submit" disabled={loading} onClick={!loading ? handleSubmit : null}>Create Account</Button>
+      <Button className="auth-btn" type="submit" disabled={loading} onClick={!loading ? handleSubmit : null}>Create Account</Button>
       <p style={{ textAlign: "center" }}>( Already have an account? )</p>
-      <Button variant="link" onClick={toggleLogin}>
+      <Button className="auth-link" variant="link" onClick={toggleLogin}>
         Login Here
       </Button>
     </Form>

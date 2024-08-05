@@ -26,11 +26,11 @@ const HomePage = () => {
 
   return (
     <Container fluid="sm">
-      <Row className="center">
+      <Row className="home-center">
         <Col sm={3}>
-          <h1 style={{ textAlign: "center" }}>Chat Live</h1>
+          <h1 className="home-brand">Chat Live</h1>
         </Col>
-        <Col sm={9} className="form">
+        <Col sm={9} className="home-form">
           {isLogin ? (
             <Login toggleLogin={toggleLogin} />
           ) : (

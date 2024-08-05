@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import axios from 'axios';
 
 import Form from "react-bootstrap/Form";
@@ -7,11 +8,11 @@ import Button from "react-bootstrap/Button";
 import FloatingLabel from "react-bootstrap/FloatingLabel";
 
 import { ChatState } from "../../context/ChatProvider";
+import "../../styles/auth.scss";
 
 
 const Login = ({ toggleLogin }) => {
 
-  const [validated, setValidated] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState();
@@ -21,7 +22,7 @@ const Login = ({ toggleLogin }) => {
   const handleSubmit = async () => {
     setLoading(true);
     if (!email || !password) {
-      //Add toats
+      toast.error("Please Fill All the Fields");
       setLoading(false);
       return;
     }
@@ -39,7 +40,7 @@ const Login = ({ toggleLogin }) => {
         config
       );
 
-      //SUccess toast
+      toast.success("Login Successful!");
       //setUser(data);
       console.log(data);
       localStorage.setItem("userInfo", JSON.stringify(data));
@@ -47,14 +48,15 @@ const Login = ({ toggleLogin }) => {
       setLoading(false);
       navigate('/chats');
     } catch (error) {
-      //Error toast
+      toast.error("Invalid Credentials! Please try again.");
+      //console.log(error);
       setLoading(false);
     }
   };
 
   return (
-    <Form noValidate className="d-grid gap-2" validated={validated}>
-      <h1>Login</h1>
+    <Form className="d-grid gap-2">
+      <h1 className="auth-form__title">Login</h1>
 
       <FloatingLabel controlId="email" label="Email Address*" className="mb-3">
         <Form.Control
@@ -64,26 +66,22 @@ const Login = ({ toggleLogin }) => {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
-        <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
-        <Form.Control.Feedback type="invalid">Invalid Email</Form.Control.Feedback>
       </FloatingLabel>
       <FloatingLabel controlId="password" label="Password*" className="mb-3">
         <Form.Control
           required
-          type="text"
+          type="password"
           placeholder="Enter your password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
-        <Form.Control.Feedback type="invalid">Incorrect Password</Form.Control.Feedback>
       </FloatingLabel>
 
-      <Button type="submit" disabled={loading} onClick={!loading ? handleSubmit : null}>Login</Button>
+      <Button className="auth-btn" type="submit" disabled={loading} onClick={!loading ? handleSubmit : null}>Login</Button>
       <p style={{ textAlign: "center" }} className="mt-4">
         ( Don&apos;t have an account yet? )
       </p>
-      <Button variant="link" onClick={toggleLogin}>
+      <Button className="auth-link" variant="link" onClick={toggleLogin}>
         Create an Account
       </Button>
     </Form>

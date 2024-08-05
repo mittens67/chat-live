@@ -1,10 +1,10 @@
 import { useState } from "react";
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
-//import Image from "react-bootstrap/Image";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import axios from "axios";
+import toast from 'react-hot-toast';
 
 import Form from "react-bootstrap/Form";
 import FloatingLabel from "react-bootstrap/FloatingLabel";
@@ -12,6 +12,7 @@ import { ChatState } from "../../context/ChatProvider";
 import Loading from "./Loading";
 import UserListItem from "./UserListItem";
 import UserBadgeItem from "./UserBadgeItem";
+import "../../styles/components/ui/groupChatModal.scss"; 
 
 const GroupChatModal = ({ children }) => {
   const [show, setShow] = useState(false);
@@ -28,8 +29,7 @@ const GroupChatModal = ({ children }) => {
 
   const handleGroup = (userToAdd) => {
     if (selectedUsers.includes(userToAdd)) {
-      //warning toast
-      console.log("user already exists");
+      toast.error("User Already Exists");
       return;
     }
 
@@ -53,7 +53,7 @@ const GroupChatModal = ({ children }) => {
       setLoading(false);
       setSearchResult(data);
     } catch (error) {
-      //toast
+      toast.error("GSomething went wrong");
       console.log(error);
       setLoading(false);
     }
@@ -65,8 +65,7 @@ const GroupChatModal = ({ children }) => {
 
   const handleSubmit = async () => {
     if (!groupChatName || !selectedUsers) {
-      // Warning Toast
-      console.log("Please fill fields");
+      toast.error("Please fill fields");
       return;
     }
 
@@ -86,9 +85,11 @@ const GroupChatModal = ({ children }) => {
       );
       setChats([data, ...chats]);
       handleClose();
-      //add success toast
+      toast.success("Group Created!");
+      setGroupChatName();
+      setSelectedUsers([]);
     } catch (error) {
-      //Add error toast
+      toast.error("Group Could Not Be Created");
     }
   };
 
@@ -98,7 +99,7 @@ const GroupChatModal = ({ children }) => {
 
       <Modal show={show} centered onHide={handleClose}>
         <Modal.Header closeButton className="border-0 text-center">
-          <Modal.Title className="w-100">Create Group Chat</Modal.Title>
+          <Modal.Title className="w-100 groupModal-title">Create Group Chat</Modal.Title>
         </Modal.Header>
         <Modal.Body className="text-center w-100">
           <FloatingLabel controlId="name" label="Chat Name*" className="mb-3">
@@ -144,7 +145,7 @@ const GroupChatModal = ({ children }) => {
           )}
         </Modal.Body>
         <Modal.Footer className="border-0">
-          <Button onClick={handleSubmit}>Create</Button>
+          <Button className="groupModal-btn" onClick={handleSubmit}>Create</Button>
         </Modal.Footer>
       </Modal>
     </>

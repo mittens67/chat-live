@@ -3,6 +3,7 @@ import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import Image from "react-bootstrap/Image";
 import { FaEye } from "react-icons/fa";
+import "../../styles/components/ui/modal.scss";
 
 const ProfileModal = ({ user, children }) => {
   const [show, setShow] = useState(false);
@@ -14,7 +15,7 @@ const ProfileModal = ({ user, children }) => {
       {children ? (
         <span onClick={handleShow}>{children}</span>
       ) : (
-        <Button variant="secondary" onClick={handleShow}>
+        <Button className="modal-btn" onClick={handleShow}>
           <FaEye />
         </Button>
       )}

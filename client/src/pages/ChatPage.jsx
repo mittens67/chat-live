@@ -15,7 +15,7 @@ const ChatPage = () => {
   return (
     <div style={{width: "100%"}}>
       {user && <Header />}
-      <Container className='mt-1' style={{ height: "calc(100vh - 5rem)"}}>
+      <Container fluid className='mt-1' style={{ height: "calc(100vh - 5rem)"}}>
           <Row style={{height: "100%"}}>
             <Col xs={3} >
                {user && <ChatList fetchAgain={fetchAgain}/>}

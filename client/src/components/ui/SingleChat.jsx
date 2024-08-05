@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Lottie from 'react-lottie';
+import toast from 'react-hot-toast';
 
 import InputGroup from "react-bootstrap/InputGroupText";
 import Form from "react-bootstrap/Form";
-import Button from "react-bootstrap/Button";
 
 import ProfileModal from "./ProfileModal";
 import { getSender, getSenderFull } from "../../config/chatLogic";
@@ -17,6 +17,7 @@ import ScrollableChat from "./ScrollableChat";
 import "../../styles/components/ui/singleChat.scss";
 import Loading from "./Loading";
 import io from 'socket.io-client';
+
 
 
 const ENDPOINT = "http://localhost:3000";
@@ -64,9 +65,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
         socket.emit('join chat', selectedChat._id);
       } catch (error) {
-        //Toast
+        toast.error("Something Went Wrong with fetching chats");
         setLoading(false);
-        console.log("something went wrong");
       }
     };
   
@@ -93,8 +93,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         socket.emit('new message',data);
         setMessages([...messages,data]);
       } catch (error) {
-        //Toast
-        console.log("Something went wrong");
+        toast.error("Something went wrong with sending message");
       }
     }
   };
@@ -153,19 +152,19 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   return (
     <div style={{ height: "100%" }}>
       {!selectedChat ? (
-        <>Click on a user to start chatting</>
+        <div className="singleChat-blank"><p>Click on a user to start chatting</p></div>
       ) : (
         <>
           {!selectedChat.isGroupChat ? (
             <>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                {getSender(user, selectedChat.users)}
+              <div className="singleChat-header">
+                <p>{getSender(user, selectedChat.users)}</p>
                 <ProfileModal user={getSenderFull(user, selectedChat.users)} />
               </div>
             </>
           ) : (
-            <div className="groupChat-btn">
-              {selectedChat.chatName.toUpperCase()}
+            <div className="singleChat-header">
+              <p>{selectedChat.chatName.toUpperCase()}</p>
               <UpdateGroupChatModal
                 fetchMessages={fetchMessages}
                 fetchAgain={fetchAgain}
