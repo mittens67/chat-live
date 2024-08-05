@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import Lottie from 'react-lottie';
-import toast from 'react-hot-toast';
+import Lottie from "react-lottie";
+import toast from "react-hot-toast";
 
-import InputGroup from "react-bootstrap/InputGroupText";
+import InputGroup from "react-bootstrap/InputGroup";
+import DropdownButton from "react-bootstrap/DropdownButton";
+import Dropdown from "react-bootstrap/Dropdown";
 import Form from "react-bootstrap/Form";
 
 import ProfileModal from "./ProfileModal";
@@ -16,9 +18,9 @@ import ScrollableChat from "./ScrollableChat";
 
 import "../../styles/components/ui/singleChat.scss";
 import Loading from "./Loading";
-import io from 'socket.io-client';
-
-
+import io from "socket.io-client";
+import { FaPaperclip } from "react-icons/fa";
+import FileUploadModal from "./FileUploadModal";
 
 //const ENDPOINT = "http://localhost:3000"; //dev
 const ENDPOINT = "https://chat-live-qziv.onrender.com/"; //prod
@@ -32,48 +34,52 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const [typing, setTyping] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
 
-  const { selectedChat, user, notification, setNotification } =
-    ChatState();
+  const { selectedChat, user, notification, setNotification } = ChatState();
 
-    const defaultOptions = {
-      loop: true,
-      autoplay: true,
-      animationData: animationData,
-      rendererSettings: {
-        preserveAspectRatio: "xMidYMid slice",
-      },
-    };
+  const defaultOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: animationData,
+    rendererSettings: {
+      preserveAspectRatio: "xMidYMid slice",
+    },
+  };
 
-    const fetchMessages = async () => {
-      if (!selectedChat) return;
-  
-      try {
-        const config = {
-          headers: {
-            Authorization: `Bearer ${user.token}`,
-          },
-        };
-  
-        setLoading(true);
-  
-        const { data } = await axios.get(
-          `/api/message/${selectedChat._id}`,
-          config
-        );
+  const fileSendHandler = (data) => {
+    socket.emit("new message", data);
+    setMessages([...messages, data]);
+  }
 
-        setMessages(data);
-        setLoading(false);
+  const fetchMessages = async () => {
+    if (!selectedChat) return;
 
-        socket.emit('join chat', selectedChat._id);
-      } catch (error) {
-        toast.error("Something Went Wrong with fetching chats");
-        setLoading(false);
-      }
-    };
-  
+    try {
+      const config = {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      };
+
+      setLoading(true);
+
+      const { data } = await axios.get(
+        `/api/message/${selectedChat._id}`,
+        config
+      );
+
+      setMessages(data);
+      setLoading(false);
+
+      socket.emit("join chat", selectedChat._id);
+    } catch (error) {
+      toast.error("Something Went Wrong with fetching chats");
+      setLoading(false);
+    }
+  };
+
   const sendMessage = async (e) => {
     if (e.key === "Enter" && newMessage) {
-      socket.emit('stop typing', selectedChat._id);
+      socket.emit("stop typing", selectedChat._id);
       try {
         const config = {
           headers: {
@@ -82,7 +88,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           },
         };
         setNewMessage(""); // This is async, so we should be good with sending post
-        
+
         const { data } = await axios.post(
           "/api/message",
           {
@@ -91,8 +97,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           },
           config
         );
-        socket.emit('new message',data);
-        setMessages([...messages,data]);
+        socket.emit("new message", data);
+        setMessages([...messages, data]);
       } catch (error) {
         toast.error("Something went wrong with sending message");
       }
@@ -102,10 +108,10 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     setNewMessage(e.target.value);
 
     /*Type Indicator */
-    if(!socketConnected) return;
-    if(!typing) {
+    if (!socketConnected) return;
+    if (!typing) {
       setTyping(true);
-      socket.emit('typing', selectedChat._id);
+      socket.emit("typing", selectedChat._id);
     }
     let lastTypingTime = new Date().getTime();
     let timerLength = 3000;
@@ -113,8 +119,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       let timeNow = new Date().getTime();
       let timeDiff = timeNow - lastTypingTime;
 
-      if(timeDiff >= timerLength && typing) {
-        socket.emit('stop typing', selectedChat._id);
+      if (timeDiff >= timerLength && typing) {
+        socket.emit("stop typing", selectedChat._id);
         setTyping(false);
       }
     }, timerLength);
@@ -124,11 +130,11 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     socket = io(ENDPOINT, {
       withCredentials: false,
     });
-    socket.emit('setup',user);
-    socket.on('connection',() => setSocketConnected(true));
-    socket.on('typing',() => setIsTyping(true));
-    socket.on('stop typing',() => setIsTyping(false));
-  },[]);
+    socket.emit("setup", user);
+    socket.on("connection", () => setSocketConnected(true));
+    socket.on("typing", () => setIsTyping(true));
+    socket.on("stop typing", () => setIsTyping(false));
+  }, []);
 
   useEffect(() => {
     fetchMessages();
@@ -136,24 +142,27 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   }, [selectedChat]);
 
   useEffect(() => {
-    socket.on('message recieved',(newMessageRecieved) => {
-      if(!selectedChatCompare || selectedChatCompare._id === newMessageRecieved._id) {
-        if(!notification.includes(newMessageRecieved)) {
-          setNotification([newMessageRecieved,...notification]);
+    socket.on("message recieved", (newMessageRecieved) => {
+      if (
+        !selectedChatCompare ||
+        selectedChatCompare._id === newMessageRecieved._id
+      ) {
+        if (!notification.includes(newMessageRecieved)) {
+          setNotification([newMessageRecieved, ...notification]);
           setFetchAgain(!fetchAgain);
         }
       } else {
-        setMessages([...messages, newMessageRecieved])
+        setMessages([...messages, newMessageRecieved]);
       }
     });
-  })
-
-
+  });
 
   return (
     <div style={{ height: "100%" }}>
       {!selectedChat ? (
-        <div className="singleChat-blank"><p>Click on a user to start chatting</p></div>
+        <div className="singleChat-blank">
+          <p>Click on a user to start chatting</p>
+        </div>
       ) : (
         <>
           {!selectedChat.isGroupChat ? (
@@ -174,15 +183,23 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
             </div>
           )}
           <div className="singleChat-box">
-            {loading ? <Loading /> : <div className="singleChat-box__messages">
-              <ScrollableChat messages={messages}/>
-            </div>}
-            { isTyping ? <div><Lottie
-                    options={defaultOptions}
-                    height={25}
-                    width={70}
-                    style={{ marginBottom: 15, marginLeft: 0 }}
-                  /></div> : null}
+            {loading ? (
+              <Loading />
+            ) : (
+              <div className="singleChat-box__messages">
+                <ScrollableChat messages={messages} />
+              </div>
+            )}
+            {isTyping ? (
+              <div>
+                <Lottie
+                  options={defaultOptions}
+                  height={25}
+                  width={70}
+                  style={{ marginBottom: 15, marginLeft: 0 }}
+                />
+              </div>
+            ) : null}
             <InputGroup>
               <Form.Control
                 placeholder="Enter a message"
@@ -192,7 +209,20 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                 required
                 value={newMessage}
               />
-              {/* <Button variant="outline-secondary">Attachment</Button> */}
+              <DropdownButton
+                variant="outline-secondary"
+                title={<FaPaperclip />}
+                id="input-group-dropdown-2"
+                align="end"
+              >
+                <FileUploadModal title="File" handler={fileSendHandler}>
+                <Dropdown.Item>Upload File</Dropdown.Item>
+                </FileUploadModal>
+                <Dropdown.Divider />
+                <FileUploadModal title="Image" handler={fileSendHandler}>
+                  <Dropdown.Item>Upload Image</Dropdown.Item>
+                </FileUploadModal>
+              </DropdownButton>
               {/* <Button variant="outline-secondary">Send Attachment</Button> */}
             </InputGroup>
           </div>

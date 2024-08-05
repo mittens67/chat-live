@@ -1,5 +1,6 @@
 import ScrollableFeed from "react-scrollable-feed";
 import { ChatState } from "../../context/ChatProvider";
+import { isValidURL } from "../../config/chatLogic";
 
 import Image from "react-bootstrap/Image";
 import {
@@ -8,11 +9,12 @@ import {
   isSameSenderMargin,
   isSameUser,
 } from "../../config/chatLogic";
+import RenderMessage from "./RenderMessage";
 
 const ScrollableChat = ({ messages }) => {
   const { user } = ChatState();
   return (
-    <ScrollableFeed style={{maxHeight: "100%"}}>
+    <ScrollableFeed style={{ maxHeight: "100%" }}>
       {messages &&
         messages.map((m, i) => (
           <div style={{ display: "flex" }} key={m._id}>
@@ -21,19 +23,27 @@ const ScrollableChat = ({ messages }) => {
               <Image
                 src={user.picture}
                 alt={user.name}
-                style={{ width: "2rem" }}
+                style={{ width: "2rem", height: "2rem" }}
                 roundedCircle
               />
             )}
-            <span style={{backgroundColor: `${
-                  m.sender._id === user._id ? "#BEC6A0" : "#708871"
-                }`,
-                marginLeft: isSameSenderMargin(messages, m, i, user._id),
-                marginTop: isSameUser(messages, m, i, user._id) ? 3 : 10,
-                borderRadius: "20px",
-                padding: "5px 15px",
-                maxWidth: "75%"
-                }}>{m.content}</span>
+            {isValidURL(m.content) ? (
+              <RenderMessage
+                url={true}
+                m={m}
+                user={user}
+                i={i}
+                messages={messages}
+              />
+            ) : (
+              <RenderMessage
+                url={false}
+                m={m}
+                user={user}
+                i={i}
+                messages={messages}
+              />
+            )}
           </div>
         ))}
     </ScrollableFeed>
