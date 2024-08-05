@@ -2,6 +2,7 @@ import axios from "axios";
 import { useState } from "react";
 import UserBadgeItem from "./UserBadgeItem";
 import { ChatState } from "../../context/ChatProvider";
+import toast from 'react-hot-toast';
 
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
@@ -10,6 +11,7 @@ import Form from "react-bootstrap/Form";
 import InputGroup from "react-bootstrap/InputGroup";
 import Loading from "./Loading";
 import UserListItem from "./UserListItem";
+import "../../styles/components/ui/updateGroupChatModal.scss";
 import "../../styles/components/ui/modal.scss";
 import { FaEdit } from "react-icons/fa";
 
@@ -29,12 +31,12 @@ const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
 
   const handleAddUser = async (user1) => {
     if (selectedChat.users.find((u) => u._id === user1._id)) {
-      //Toast
+      toast.error("Could not get user");
       return;
     }
 
     if (selectedChat.groupAdmin._id !== user._id) {
-      //Toast
+      toast.error("Admin Only!");
       return;
     }
 
@@ -58,7 +60,7 @@ const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
       setFetchAgain(!fetchAgain);
       setLoading(false);
     } catch (error) {
-      //Toats
+      toast.error("Something went wrong!");
       setLoading(false);
     }
     setGroupChatName("");
@@ -82,7 +84,7 @@ const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
       setLoading(false);
       setSearchResult(data);
     } catch (error) {
-      // Add Toast
+      toast.error("Something went wrong!");
       setLoading(false);
     }
   };
@@ -111,7 +113,7 @@ const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
       setFetchAgain(!fetchAgain);
       setRenameLoading(false);
     } catch (error) {
-      // Error toast here
+      toast.error("Could not rename group");
       setRenameLoading(false);
     }
     setGroupChatName("");
@@ -119,7 +121,7 @@ const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
 
   const handleRemove = async (user1) => {
     if (selectedChat.groupAdmin._id !== user._id && user1._id !== user._id) {
-      //Error toast
+      toast.error("Could not perform remove");
       return;
     }
     
@@ -145,7 +147,7 @@ const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
       fetchMessages();
       setLoading(false);
     } catch (error) {
-      //Add error toats
+      toast.error("Something went wrong");
       setLoading(false);
     }
     setGroupChatName("");
@@ -157,10 +159,10 @@ const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
 
       <Modal show={show} centered onHide={handleClose}>
         <Modal.Header closeButton className="border-0 text-center">
-          <Modal.Title className="w-100">{selectedChat.chatName}</Modal.Title>
+          <Modal.Title className="w-100 updateGroup-title">{selectedChat.chatName}</Modal.Title>
         </Modal.Header>
-        <Modal.Body className="text-center w-100">
-          <Row>
+        <Modal.Body className="text-center w-100 p-5">
+          <Row className="mb-3">
             {selectedChat.users.map((u) => (
               <UserBadgeItem
                 key={u._id}
@@ -171,13 +173,13 @@ const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
             ))}
           </Row>
 
-          <InputGroup>
+          <InputGroup className="mb-3">
             <Form.Control
               placeholder="Rename Group"
               aria-label="Enter new Group Name"
               onChange={(e) => setGroupChatName(e.target.value)}
             />
-            <Button loading={`${renameloading}`} onClick={handleRename}>
+            <Button className="updateGroup-btn" loading={`${renameloading}`} onClick={handleRename}>
               Update
             </Button>
           </InputGroup>

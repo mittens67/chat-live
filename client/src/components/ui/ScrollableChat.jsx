@@ -12,7 +12,7 @@ import {
 const ScrollableChat = ({ messages }) => {
   const { user } = ChatState();
   return (
-    <ScrollableFeed>
+    <ScrollableFeed style={{maxHeight: "100%"}}>
       {messages &&
         messages.map((m, i) => (
           <div style={{ display: "flex" }} key={m._id}>

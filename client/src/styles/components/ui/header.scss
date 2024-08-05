@@ -1,39 +1,54 @@
-.nav {
-    &-btn {
-        text-decoration: none;
-        display: flex;
-        align-items: center;
+.header {
+  &-brand {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #708871;
+  }
 
-        &__text {
-            margin-left: 2px;
-        }
-    }
-}
-
-.nav-container {
+  &-btn {
+    text-decoration: none;
     display: flex;
+    align-items: center;
+    color: #708871;
+
+    &__text {
+      margin-left: 2px;
+    }
+  }
+
+  &-container {
+    display: flex;
+  }
+
+  &-dropdown {
+      color: #708871;
+  }
+
+  &-badge {
+    background-color: #708871;
+  }
 }
+
 
 //This is overwriting Bootstrap CSS so dropdown does not overflow. See if there is a better way to do this later
 .dropdown-menu {
-    right: 0 !important;
-    left: auto !important;
+  right: 0 !important;
+  left: auto !important;
 }
 
 .avatar {
-    vertical-align: middle;
-    width: 2rem;
-    height: 2rem;
-    border-radius: 50%;
- }
-
+  vertical-align: middle;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+}
 
 @media screen and (max-width: 576px) {
-    .nav {
-        &-btn {
-            &__text {
-                display: none;
-            }
-        }
+  .header {
+    &-btn {
+      &__text {
+        display: none;
+      }
     }
+  }
 }

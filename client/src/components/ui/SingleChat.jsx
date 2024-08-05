@@ -31,7 +31,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const [typing, setTyping] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
 
-  const { selectedChat, setSelectedChat, user, notification, setNotification } =
+  const { selectedChat, user, notification, setNotification } =
     ChatState();
 
     const defaultOptions = {
@@ -172,8 +172,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
               />
             </div>
           )}
-          <div className="chat-box">
-            {loading ? <Loading /> : <div className="chat-box__messages">
+          <div className="singleChat-box">
+            {loading ? <Loading /> : <div className="singleChat-box__messages">
               <ScrollableChat messages={messages}/>
             </div>}
             { isTyping ? <div><Lottie

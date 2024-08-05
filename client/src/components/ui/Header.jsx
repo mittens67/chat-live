@@ -38,18 +38,18 @@ const Header = () => {
             variant="link"
             data-toggle="tooltip"
             title="Search User"
-            className="nav-btn"
+            className="header-btn"
           >
             <FaSearch />
-            <span className="nav-btn__text">Search User</span>
+            <span className="header-btn__text">Search User</span>
           </Button>
           </SearchSidePanel>
-          <Navbar.Brand href="/chat">Chat Live</Navbar.Brand>
-          <div className="nav-container me-5">
+          <Navbar.Brand href="/chats" className="header-brand">Chat Live</Navbar.Brand>
+          <div className="header-container me-5">
             {/* <Button variant="link" className="nav-btn"><FaBell /></Button> */}
-            <Dropdown>
-              <Dropdown.Toggle variant="link" id="dropdown-basic">
-                <FaBell /><Badge variant="light">{notification.length}</Badge>
+            <Dropdown >
+              <Dropdown.Toggle className="header-dropdown" variant="link" id="dropdown-basic">
+                <FaBell /><Badge bg={notification.length? `danger` : `secondary`} variant="light">{notification.length}</Badge>
               </Dropdown.Toggle>
 
               <Dropdown.Menu style={{position:"absolute"}}>
@@ -65,7 +65,7 @@ const Header = () => {
               </Dropdown.Menu>
             </Dropdown>
             <Dropdown>
-              <Dropdown.Toggle variant="link" id="dropdown-basic">
+              <Dropdown.Toggle className="header-dropdown" variant="link" id="dropdown-basic">
                 <img src={user.picture} alt={`${user.name}`} className="avatar" />
               </Dropdown.Toggle>
 
