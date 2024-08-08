@@ -10,7 +10,7 @@ import ChatProvider from './context/ChatProvider.jsx';
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ChatProvider>
-    <App />
+    <App/>
     <Toaster position='top-right' />
     </ChatProvider>
   </React.StrictMode>,

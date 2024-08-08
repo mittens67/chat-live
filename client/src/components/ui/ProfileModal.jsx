@@ -3,13 +3,15 @@ import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import Image from "react-bootstrap/Image";
 import { FaEye } from "react-icons/fa";
-import "../../styles/components/ui/modal.scss";
+import { ChatState } from "../../context/ChatProvider";
+//import "../../styles/components/ui/modal.scss";
 
 const ProfileModal = ({ user, children }) => {
   const [show, setShow] = useState(false);
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
+  const {darkTheme} = ChatState();
   return (
     <>
       {children ? (
@@ -20,9 +22,9 @@ const ProfileModal = ({ user, children }) => {
         </Button>
       )}
 
-      <Modal show={show} centered onHide={handleClose}>
+      <Modal show={show} centered onHide={handleClose} data-bs-theme={darkTheme? 'dark': ''}>
         <Modal.Header closeButton className="border-0 text-center">
-          <Modal.Title className="w-100">{user.name}</Modal.Title>
+          <Modal.Title className="w-100 modal-title">{user.name}</Modal.Title>
         </Modal.Header>
         <Modal.Body className="text-center w-100">
           <Image
@@ -32,7 +34,7 @@ const ProfileModal = ({ user, children }) => {
             roundedCircle
             className="mb-5"
           />
-          <p>Email: {user.email}</p>
+          <p><span className="modal-label">Email:</span> {user.email}</p>
         </Modal.Body>
       </Modal>
     </>

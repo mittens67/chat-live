@@ -1,0 +1,127 @@
+.chatList {
+  &-container {
+    max-height: calc(100vh - 5.5rem);
+    overflow-y: hidden;
+    padding: 0 1rem;
+    padding-bottom: 4rem;
+    // -ms-overflow-style: none; /* Internet Explorer 10+ */
+    //   scrollbar-width: none; /* Firefox */
+    //   &::-webkit-scrollbar {
+    //     display: none;  /* Safari and Chrome */
+    // }
+  }
+
+  &-scrollableRow {
+    height: 100%; // height is necessary for scroll to work
+    // change bootstrap defaults here to space items inside this window properly
+    flex-direction: column;
+    flex-wrap: nowrap;
+
+    overflow-y: auto;
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+    scrollbar-width: thin; /* Firefox */
+    &::-webkit-scrollbar {
+      display: none; /* Safari and Chrome */
+    }
+  }
+
+  &-title {
+    font-weight: bold;
+    font-size: 1.5rem;
+  }
+
+  &-btn {
+    border: none;
+    font-weight: bold;
+  }
+  &-chat {
+    height: 4rem;
+    width: 95%;
+    margin: 0.2rem auto;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+  }
+}
+
+.theme-light {
+  .chatList {
+    &-scrollableRow {
+      scrollbar-color: $color-primary $color-secondary;
+    }
+
+    &-title {
+      color: $color-accent;
+    }
+
+    &-btn {
+      background-color: $color-primary;
+      border: 0.1rem solid $color-secondary;
+
+      &:hover {
+        background-color: $color-secondary;
+        color: $color-accent;
+        border: 0.1rem solid $color-primary;
+      }
+    }
+    &-chat {
+      background-color: $color-tertiary;
+
+      &:hover {
+        background-color: $color-primary;
+        color: $color-white;
+      }
+    }
+
+    &-selected {
+      background-color: $color-secondary;
+
+      &:hover {
+        background-color: $color-secondary;
+      }
+    }
+  }
+}
+
+.theme-dark {
+  .chatList {
+    &-scrollableRow {
+      scrollbar-color: $color-primary $color-secondary;
+    }
+
+    &-title {
+      color: $color-tertiary;
+    }
+
+    &-btn {
+      background-color: $color-secondary;
+      border: 0.1rem solid $color-primary;
+      color: $color-accent;
+
+      &:hover {
+        background-color: $color-primary;
+        color: $color-white;
+        border: 0.1rem solid $color-secondary;
+      }
+    }
+    &-chat {
+      background-color: $color-accent;
+      color: $color-white;
+
+      &:hover {
+        background-color: $color-secondary;
+        color: $color-black;
+      }
+    }
+
+    &-selected {
+      background-color: $color-primary;
+
+      &:hover {
+        background-color: $color-primary;
+      }
+    }
+  }
+}

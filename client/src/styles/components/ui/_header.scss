@@ -1,0 +1,132 @@
+.header {
+  &-brand {
+    font-size: 2rem;
+    font-weight: bold;
+  }
+
+  &-btn {
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+
+    &__text {
+      margin-left: 2px;
+    }
+  }
+
+  &-container {
+    display: flex;
+  }
+
+}
+
+//This is overwriting Bootstrap CSS so dropdown does not overflow. See if there is a better way to do this later
+.dropdown-menu {
+  right: 0 !important;
+  left: auto !important;
+}
+
+.avatar {
+  vertical-align: middle;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+}
+
+@media screen and (max-width: 576px) {
+  .header {
+    &-btn {
+      &__text {
+        display: none;
+      }
+    }
+
+    &-brand {
+      font-size: 1.5rem;
+      font-weight: semibold;
+    }
+  }
+
+  .avatar {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+}
+
+
+/** lIght theme **/
+
+.theme-light {
+    .header {
+      &-nav {
+        background-color: $color-white;
+        border-bottom: 0.1rem solid $color-black;
+      }
+      &-brand {
+        color: $color-primary;
+      }
+      &-btn {
+        color: $color-primary;
+    
+        &:hover {
+          color: $color-black;
+        }
+      }
+      &-dropdown {
+        color: $color-primary;
+      }
+      &-badge {
+        background-color: $color-primary;
+      }
+    }
+    .avatar {
+      border: 0.05rem solid $color-primary;
+    }
+}
+
+
+/**Dark theme**/
+
+.theme-dark {
+  .header {
+    &-nav {
+      background-color: $color-black;
+      border-bottom: 0.1rem solid $color-accent;
+    }
+    &-brand {
+      color: $color-primary;
+    }
+    &-btn {
+      color: $color-primary;
+  
+      &:hover {
+        color: $color-white;
+      }
+    }
+    &-dropdown {
+      color: $color-primary;
+    }
+    &-badge {
+      background-color: $color-primary;
+    }
+  }
+  .avatar {
+    border: 0.05rem solid $color-primary;
+  }
+
+  //These are Bootstrap classes, change needed only in dark mode
+  .dropdown-menu {
+    background-color: $color-black;
+    color: $color-white;
+    outline: .05rem solid $color-white
+  }
+
+  .dropdown-item {
+    color: $color-white;
+    &:hover {
+      background-color: $color-accent;
+    }
+  }
+}
+
+

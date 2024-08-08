@@ -7,6 +7,7 @@ const User = require("../models/userModel");
 //@access          Protected
 const accessChat = asyncHandler(async (req, res) => {
     const { userId } = req.body;
+    //console.log(`In acessChat - userId is ${userId}`)
   
     if (!userId) {
       console.log("UserId param not sent with request");

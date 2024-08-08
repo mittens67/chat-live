@@ -7,7 +7,7 @@ import Col from "react-bootstrap/Col";
 import Login from "../components/Auth/Login";
 import Register from "../components/Auth/Register";
 
-import "../styles/pages/homePage.scss";
+//import "../styles/pages/homePage.scss";
 
 const HomePage = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -19,9 +19,10 @@ const HomePage = () => {
     const userInfo = JSON.parse(localStorage.getItem("userInfo"));
     setUser(userInfo);
 
-    if(!userInfo) {
-     navigate('/');
-    }
+    // REmove this, not needed
+    // if(!userInfo) {
+    //  navigate('/');
+    // }
  },[]);
 
   return (

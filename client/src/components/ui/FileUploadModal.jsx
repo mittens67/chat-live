@@ -48,7 +48,7 @@ const FileUploadModal = ({ children, title, handler }) => {
           .then((res) => res.json())
           .then((data) => {
             setDoc(data.url.toString());
-            console.log(data.url.toString());
+            //console.log(data.url.toString());
             setLoading(false);
           })
           .catch((err) => {
@@ -56,7 +56,7 @@ const FileUploadModal = ({ children, title, handler }) => {
             setLoading(false);
           });
       } else {
-        console.log(`File upload failure`);
+        //console.log(`File upload failure`);
         toast.error("Failed to upload image!");
         setLoading(false);
         return;
@@ -75,7 +75,7 @@ const FileUploadModal = ({ children, title, handler }) => {
           .then((res) => res.json())
           .then((data) => {
             setDoc(data.url.toString());
-            console.log(data.url.toString());
+            //console.log(data.url.toString());
             setLoading(false);
           })
           .catch((err) => {
@@ -83,7 +83,7 @@ const FileUploadModal = ({ children, title, handler }) => {
             setLoading(false);
           });
       } else {
-        console.log(`image upload failure`);
+        //console.log(`image upload failure`);
         toast.error("Failed to upload image!");
         setLoading(false);
         return;

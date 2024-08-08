@@ -7,7 +7,7 @@ const RenderMessage = ({ url, m, user, messages, i }) => {
 
   if (url) {
      let imgSrc = isUrlImage(m.content) ? m.content : defaultImage;
-     console.log(imgSrc);
+     //console.log(imgSrc);
     return (
       <a
         href={m.content}

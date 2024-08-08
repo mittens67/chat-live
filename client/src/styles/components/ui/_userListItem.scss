@@ -1,14 +1,14 @@
 .list {
     &-item {
         cursor: pointer;
-        background-color: #FEF3E2;
+        background-color: $color-tertiary;
         margin: .5rem 0;
         height: 5rem;
         align-items: center;
         padding: .5rem;
 
         &:hover {
-            background-color: #BEC6A0;
+            background-color: $color-secondary;
         }
     }
 
@@ -17,12 +17,13 @@
         flex-direction: column;
 
         &__name {
-            color: #708871;
+            color: $color-primary;
             font-weight: bold;
         }
 
         &__email {
             font-weight: lighter;
+            color: $color-black;
         }
     }
 }

@@ -1,0 +1,44 @@
+.chatWindow {
+  &-btn {
+    //background-color: $color-primary;
+    border: none;
+    font-weight: bold;
+    //border: .1rem solid $color-secondary;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    // &:hover {
+    //   background-color: $color-secondary;
+    //   color: $color-accent;
+    //   border: .1rem solid $color-primary;
+    // }
+  }
+}
+
+.theme-light {
+  .chatWindow {
+    &-btn {
+      background-color: $color-primary;
+      border: 0.1rem solid $color-secondary;
+      &:hover {
+        background-color: $color-secondary;
+        color: $color-accent;
+        border: 0.1rem solid $color-primary;
+      }
+    }
+  }
+}
+
+.theme-dark {
+  .chatWindow {
+    &-btn {
+      background-color: $color-secondary;
+      border: 0.1rem solid $color-primary;
+      &:hover {
+        background-color: $color-primary;
+        color: $color-white;
+        border: 0.1rem solid $color-secondary;
+      }
+    }
+  }
+}

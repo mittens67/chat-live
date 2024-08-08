@@ -11,11 +11,11 @@ import Loading from "../ui/Loading";
 import GroupChatModal from "../ui/GroupChatModal";
 
 import { getSender } from "../../config/chatLogic";
-import "../../styles/components/Chat/chatList.scss";
+import { FaPlus } from "react-icons/fa";
 
-const ChatList = ({fetchAgain}) => {
+const ChatList = ({ fetchAgain, showChatWindow, setShowChatWindow }) => {
   const [loggedUser, setLoggedUser] = useState();
-  const { setSelectedChat, chats, setChats, user, selectedChat } = ChatState();
+  const { setSelectedChat, chats, setChats, user, selectedChat, darkTheme } = ChatState();
 
   const fetchChats = async () => {
     try {
@@ -28,7 +28,7 @@ const ChatList = ({fetchAgain}) => {
       const { data } = await axios.get("/api/chat", config);
       setChats(data);
     } catch (error) {
-     //toast
+      //toast
     }
   };
 
@@ -40,37 +40,62 @@ const ChatList = ({fetchAgain}) => {
 
   return (
     <>
-    <Container fluid style={{ height: "100%", backgroundColor: "white"}}  >
+      <Container
+        fluid
+        className={
+          showChatWindow
+            ? `d-none d-md-block chatList-container`
+            : `d-block chatList-container`
+        }
+        style={{ height: "100%", backgroundColor: darkTheme? "black" : "white" }}
+      >
         <Row>
           <Col className="d-flex justify-content-between pt-2">
             <p className="chatList-title">My Chats</p>
             <GroupChatModal>
-            <Button className="chatList-btn">
-              New Group Chat
-            </Button>
+              <Button
+                data-toggle="tooltip"
+                title="New Group Chat"
+                className="chatList-btn"
+              >
+                <span className="d-inline d-xl-none">
+                  <FaPlus />
+                </span>
+                <span className="d-none d-xl-inline">New Group Chat</span>
+              </Button>
+              {/* <Button onClick={handler} className="d-md-none">Back to chat list</Button> */}
             </GroupChatModal>
           </Col>
         </Row>
-        {
-          chats? (
-            <Row>
-              {
-                chats.map((chat) => (
-                  <Col xs={12} className={selectedChat === chat? "chatList-chat chatList-selected" : "chatList-chat"} onClick={() => setSelectedChat(chat)}  key={chat._id}>
-                        {
-                          !chat.isGroupChat ? `${(getSender(loggedUser, chat.users))}` : `${chat.chatName}`
-                        }       
-                  </Col>
-                ))
-              }
-            </Row>
-          ): (
-            <Loading />
-          )
-        }
-    </Container>
+        {chats ? (
+          <Row className="chatList-scrollableRow">
+            {chats.map((chat) => (
+              <Col
+                xs={12}
+                className={
+                  selectedChat === chat
+                    ? "chatList-chat chatList-selected"
+                    : "chatList-chat"
+                }
+                onClick={() => {
+                  //console.log("setting selected chat");
+                  setSelectedChat(chat);
+                  setShowChatWindow(); 
+                }}
+                key={chat._id}
+              >
+                {!chat.isGroupChat
+                  ? `${getSender(loggedUser, chat.users)}`
+                  : `${chat.chatName}`}
+              </Col>
+            ))}
+          </Row>
+        ) : (
+          <Loading />
+        )}
+      </Container>
     </>
-  )
-}
+  );
+};
 
-export default ChatList
+export default ChatList;

@@ -11,8 +11,8 @@ import Form from "react-bootstrap/Form";
 import InputGroup from "react-bootstrap/InputGroup";
 import Loading from "./Loading";
 import UserListItem from "./UserListItem";
-import "../../styles/components/ui/updateGroupChatModal.scss";
-import "../../styles/components/ui/modal.scss";
+//import "../../styles/components/ui/updateGroupChatModal.scss";
+//import "../../styles/components/ui/modal.scss";
 import { FaEdit } from "react-icons/fa";
 
 const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
@@ -23,7 +23,7 @@ const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
   const [loading, setLoading] = useState(false);
   const [renameloading, setRenameLoading] = useState(false);
 
-  const { selectedChat, setSelectedChat, user } = ChatState();
+  const { selectedChat, setSelectedChat, user, darkTheme } = ChatState();
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
@@ -157,7 +157,7 @@ const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
     <>
       <Button className="modal-btn" onClick={handleShow}><FaEdit/></Button>
 
-      <Modal show={show} centered onHide={handleClose}>
+      <Modal show={show} centered onHide={handleClose} data-bs-theme={darkTheme ? 'dark' : ''}>
         <Modal.Header closeButton className="border-0 text-center">
           <Modal.Title className="w-100 updateGroup-title">{selectedChat.chatName}</Modal.Title>
         </Modal.Header>

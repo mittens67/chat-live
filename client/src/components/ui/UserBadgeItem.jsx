@@ -1,6 +1,6 @@
 import Col from "react-bootstrap/Col";
 import Button from "react-bootstrap/Button";
-import "../../styles/components/ui/userBadgeItem.scss";
+//import "../../styles/components/ui/userBadgeItem.scss";
 
 const UserBadgeItem = ({user, handler}) => {
   return (

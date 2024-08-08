@@ -1,4 +1,5 @@
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { ChatState } from "../../context/ChatProvider";
 import axios from "axios";
 import Button from "react-bootstrap/Button";
@@ -20,14 +21,14 @@ const SearchSidePanel = ({ user, children }) => {
   const [loading, setLoading] = useState(false);
   const [loadingChat, setLoadingChat] = useState(false);
 
-  const { setSelectedChat, chats, setChats } = ChatState();
+  const { setSelectedChat, chats, setChats, darkTheme } = ChatState();
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
 
   const handleSearch = async () => {
     if (!search) {
-      //add toast
+      toast.error("Please enter a search term");
       return;
     }
 
@@ -44,7 +45,7 @@ const SearchSidePanel = ({ user, children }) => {
       setLoading(false);
       setSearchResults(data);
     } catch (err) {
-      //error toast
+      toast.error("Something went wrong with searching");
       setLoading(false);
     }
   };
@@ -59,14 +60,14 @@ const SearchSidePanel = ({ user, children }) => {
         },
       };
       const { data } = await axios.post(`/api/chat`, { userId }, config);
-      console.log(data);
+      //console.log(data);
 
       if (!chats.find((c) => c._id === data._id)) setChats([data, ...chats]);
       setSelectedChat(data);
       setLoadingChat(false);
       handleClose();
     } catch (err) {
-      //toast
+      toast.error("Something went wrong with getting the chat!");
       console.log(err);
       setLoadingChat(false);
     }
@@ -82,15 +83,15 @@ const SearchSidePanel = ({ user, children }) => {
         </Button>
       )}
 
-      <Offcanvas show={show} onHide={handleClose}>
+      <Offcanvas show={show} onHide={handleClose} data-bs-theme={darkTheme? 'dark': ''}>
         <Offcanvas.Header closeButton>
-          <Offcanvas.Title>My Chats</Offcanvas.Title>
+          <Offcanvas.Title className="sidePanel-title">Search Users</Offcanvas.Title>
         </Offcanvas.Header>
         <Offcanvas.Body>
           <Container>
             <Row className="pb-2">
               <Col xs={12}>
-                <InputGroup>
+                <InputGroup className="sidePanel-search">
                   <Form.Control
                     placeholder="Search"
                     aria-label="Search"

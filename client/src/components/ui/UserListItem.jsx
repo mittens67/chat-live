@@ -3,7 +3,7 @@ import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Image from "react-bootstrap/Image";
 
-import "../../styles/components/ui/userListItem.scss";
+//import "../../styles/components/ui/userListItem.scss";
 
 const UserListItem = ({user, handler}) => {
   return (

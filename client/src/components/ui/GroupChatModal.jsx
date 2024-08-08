@@ -12,7 +12,7 @@ import { ChatState } from "../../context/ChatProvider";
 import Loading from "./Loading";
 import UserListItem from "./UserListItem";
 import UserBadgeItem from "./UserBadgeItem";
-import "../../styles/components/ui/groupChatModal.scss"; 
+//import "../../styles/components/ui/groupChatModal.scss"; 
 
 const GroupChatModal = ({ children }) => {
   const [show, setShow] = useState(false);
@@ -22,7 +22,7 @@ const GroupChatModal = ({ children }) => {
   const [searchResult, setSearchResult] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const { user, chats, setChats } = ChatState();
+  const { user, chats, setChats, darkTheme } = ChatState();
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
@@ -97,7 +97,7 @@ const GroupChatModal = ({ children }) => {
     <>
       <span onClick={handleShow}>{children}</span>
 
-      <Modal show={show} centered onHide={handleClose}>
+      <Modal show={show} centered onHide={handleClose} data-bs-theme={darkTheme? 'dark': ''}>
         <Modal.Header closeButton className="border-0 text-center">
           <Modal.Title className="w-100 groupModal-title">Create Group Chat</Modal.Title>
         </Modal.Header>

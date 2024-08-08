@@ -1,0 +1,13 @@
+.sidePanel {
+    &-title {
+        color: $color-primary;
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    &-search {
+        border: .1rem solid $color-primary;
+        border-radius: .5rem;
+    } 
+}
+

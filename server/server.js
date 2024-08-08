@@ -2,13 +2,14 @@ const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const path = require("path");
-const { chats } = require("./data/data");
 const connectDB = require("./config/db");
-
 const userRoutes = require("./routes/userRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
+
+//Meant for debugging
+const util = require('util');
 
 const corsOpts = {
     origin: '*',
@@ -82,13 +83,17 @@ io.on("connection", (socket) => {
   socket.on('stop typing', (room) => socket.in(room).emit('stop typing'));
 
   socket.on('new message', (newMessageRecieved) => {
+  
     let chat = newMessageRecieved.chat;
+    //console.log(`We got the chat info ${chat.users}`);
+    console.log(util.inspect(chat, {showHidden: false, depth: null, colors: true}))
 
     if(!chat.users) return console.log('chat.users not defined');
 
+    
     chat.users.forEach((user) => {
       if(user._id === newMessageRecieved.sender._id) return;
-
+      console.log(user._id, newMessageRecieved.sender._id);
       socket.in(user._id).emit('message recieved', newMessageRecieved);
     });
   });

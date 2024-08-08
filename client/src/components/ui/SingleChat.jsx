@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import Lottie from "react-lottie";
 import toast from "react-hot-toast";
+import ping from '../../assets/ping.mp3';
 
 import InputGroup from "react-bootstrap/InputGroup";
 import DropdownButton from "react-bootstrap/DropdownButton";
@@ -16,7 +17,6 @@ import { ChatState } from "../../context/ChatProvider";
 import UpdateGroupChatModal from "./UpdateGroupChatModal";
 import ScrollableChat from "./ScrollableChat";
 
-import "../../styles/components/ui/singleChat.scss";
 import Loading from "./Loading";
 import io from "socket.io-client";
 import { FaPaperclip } from "react-icons/fa";
@@ -24,7 +24,7 @@ import FileUploadModal from "./FileUploadModal";
 
 //const ENDPOINT = "http://localhost:3000"; //dev
 const ENDPOINT = "https://chat-live-qziv.onrender.com/"; //prod
-let socket, selectedChatCompare;
+let socket, selectedChatCompare = null;
 
 const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const [messages, setMessages] = useState([]);
@@ -33,6 +33,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const [socketConnected, setSocketConnected] = useState(false);
   const [typing, setTyping] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const messageRef = useRef(messages);
+  
 
   const { selectedChat, user, notification, setNotification } = ChatState();
 
@@ -67,6 +69,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         config
       );
 
+      //console.log('Fetching along the flow, this can overwrite');
       setMessages(data);
       setLoading(false);
 
@@ -93,10 +96,12 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           "/api/message",
           {
             content: newMessage,
-            chatId: selectedChat,
+            chatId: selectedChat._id,
           },
           config
         );
+        //console.log(`Data we send through socket io - ${data}`);
+        //console.log('sending message');
         socket.emit("new message", data);
         setMessages([...messages, data]);
       } catch (error) {
@@ -108,8 +113,10 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     setNewMessage(e.target.value);
 
     /*Type Indicator */
+    //console.log("Before connected socket");
     if (!socketConnected) return;
     if (!typing) {
+      //console.log("Sending typing to other side");
       setTyping(true);
       socket.emit("typing", selectedChat._id);
     }
@@ -120,6 +127,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       let timeDiff = timeNow - lastTypingTime;
 
       if (timeDiff >= timerLength && typing) {
+        //console.log("Sending stop typing to other side");
         socket.emit("stop typing", selectedChat._id);
         setTyping(false);
       }
@@ -131,31 +139,71 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       withCredentials: false,
     });
     socket.emit("setup", user);
-    socket.on("connection", () => setSocketConnected(true));
+    socket.on("connected", () => {
+      setSocketConnected(true)
+    });
     socket.on("typing", () => setIsTyping(true));
     socket.on("stop typing", () => setIsTyping(false));
+
+    return () => {
+      //Stop listening to these events as part of cleanup
+      socket.off('connected', () => {
+        setSocketConnected(false);
+      });
+      socket.off('typing');
+      socket.off('stop typing');
+    }
   }, []);
 
   useEffect(() => {
     fetchMessages();
-    selectedChatCompare = selectedChat;
+    selectedChatCompare = selectedChat; // selectedChat is not directly accessible so this way to access inside .on callback
   }, [selectedChat]);
 
   useEffect(() => {
-    socket.on("message recieved", (newMessageRecieved) => {
+    /*The below use effect ends up resetting the messages state everytime we get a new message. We are
+     * using a ref to overcome this issue*/
+    messageRef.current = messages;
+  });
+
+  useEffect(() => {
+    const audio = new Audio(ping);    
+    socket?.on("message recieved", (newMessageRecieved) => {
+      
+      //console.log('on msg recieved');
+      //console.log(selectedChatCompare?._id, newMessageRecieved._id);
+
       if (
         !selectedChatCompare ||
-        selectedChatCompare._id === newMessageRecieved._id
+        selectedChatCompare._id !== newMessageRecieved.chat._id
       ) {
+        // If there is no selectedChat or the current selected chat is not the one we got message from
+
         if (!notification.includes(newMessageRecieved)) {
           setNotification([newMessageRecieved, ...notification]);
           setFetchAgain(!fetchAgain);
+          //console.log("doing a fetch again here");
         }
       } else {
-        setMessages([...messages, newMessageRecieved]);
+        /**
+         * Directly using the messages state here end up resetting the state with each event recieved.
+         * This seems to be the behavior when we use useEffect, socket.on and state updation together.
+         * So the chat history gets erased from messages and does not show up on screen.
+         * TO overcome this, we are using a useRef to track the current messages state with every render in the 
+         * useEffect right above this one. 
+         * And here, instead of accessing messages directly, we will use the ref value instead.
+         * This seems to solve this issue.
+         */
+        setMessages([...messageRef.current, newMessageRecieved]); // This way the messages state does not reset everytimre.
       }
+      //Play notification sound
+      audio.play();
     });
-  });
+
+    return () => {
+      socket.off("message recieved");
+    }
+  },[]);
 
   return (
     <div style={{ height: "100%" }}>
@@ -195,8 +243,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                 <Lottie
                   options={defaultOptions}
                   height={25}
-                  width={70}
-                  style={{ marginBottom: 15, marginLeft: 0 }}
+                  width={150}
+                  style={{ marginBottom: 5, marginLeft: 0 }}
                 />
               </div>
             ) : null}

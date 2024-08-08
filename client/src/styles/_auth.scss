@@ -1,0 +1,64 @@
+/* Login and Register Component Styles*/
+
+// @include themify($themes) {
+//   .auth {
+//     &-btn {
+//       background-color: themed("color-primary");
+//       border: none;
+//       font-weight: bold;
+//       border: 0.1rem solid themed("color-secondary");
+
+//       &:hover {
+//         background-color: themed("color-secondary");
+//         color: themed("color-accent");
+//         border: 0.1rem solid themed("color-primary");
+//       }
+//     }
+
+//     &-form__title {
+//       font-size: 2rem;
+//       font-weight: bold;
+//       color: themed("color-primary");
+//     }
+
+//     &-link {
+//       color: themed("color-primary");
+//       font-weight: bold;
+
+//       &:hover {
+//         color: themed("color-primary");
+//       }
+//     }
+//   }
+// }
+
+
+.auth {
+  &-btn {
+    background-color: $color-primary;
+    border: none;
+    font-weight: bold;
+    border: .1rem solid $color-secondary;
+
+    &:hover {
+      background-color: $color-secondary;
+      color: $color-accent;
+      border: .1rem solid $color-primary;
+    }
+  }
+
+  &-form__title {
+    font-size: 2rem;
+    font-weight: bold;
+    color: $color-primary;
+  }
+
+  &-link{
+    color: $color-primary;
+    font-weight: bold;
+
+    &:hover {
+        color: $color-accent;
+    }
+  }
+}

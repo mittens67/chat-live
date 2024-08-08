@@ -1,1 +1,17 @@
 @import 'bootstrap/scss/bootstrap';
+@import 'colors';
+@import 'app';
+@import 'auth';
+@import 'components/Chat/chatList';
+@import 'components/Chat/chatWindow';
+@import 'components/ui/groupChatModal';
+@import 'components/ui/header';
+@import 'components/ui/modal';
+@import 'components/ui/searchSidePanel';
+@import 'components/ui/singleChat';
+@import 'components/ui/updateGroupChatModal';
+@import 'components/ui/userBadgeItem';
+@import 'components/ui/userListItem';
+@import 'pages/homePage'; 
+
+

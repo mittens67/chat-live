@@ -1,0 +1,21 @@
+.updateGroup {
+  &-title {
+    font-size: 2rem;
+    font-weight: bold;
+    color: $color-primary;
+  }
+
+  &-btn {
+    background-color: $color-primary;
+    border: none;
+    font-weight: bold;
+    border: .1rem solid $color-secondary;
+    
+
+    &:hover {
+      background-color: $color-secondary;
+      color: $color-accent;
+      border: .1rem solid $color-primary;
+    }
+  }
+}
