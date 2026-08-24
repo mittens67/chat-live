@@ -7,9 +7,16 @@ import {
 export const IMAGE_TYPES = ["image/jpeg", "image/png"];
 
 export const DOCUMENT_TYPES = [
+  //Legacy Office formats
   "application/msword",
   "application/vnd.ms-excel",
   "application/vnd.ms-powerpoint",
+  //Modern OOXML formats. These were missing while the file picker advertised
+  //.docx/.xlsx/.pptx, so choosing one passed the dialog and then failed with
+  //"That file type is not supported".
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
   "text/plain",
   "application/pdf",
 ];

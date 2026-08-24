@@ -138,8 +138,10 @@ const SingleChat = ({ setFetchAgain }) => {
     }
   }, [socket]);
 
+  //Only adds it locally. The server fans the message out to everyone else when
+  //it persists it, so the client no longer emits its own copy - what recipients
+  //saw used to be whatever this browser claimed rather than what was stored.
   const appendOwnMessage = (data) => {
-    socket?.emit("new message", data);
     setMessages((prev) => [...prev, data]);
   };
 

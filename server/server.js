@@ -31,6 +31,10 @@ const io = require("socket.io")(server, {
   },
 });
 
+//Controllers reach the socket layer through req.app.get("io") so they can fan
+//out messages themselves. Absent in tests, which mount the app without sockets.
+app.set("io", io);
+
 registerSocketHandlers(io);
 
 const shutdown = async (signal) => {

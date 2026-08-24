@@ -38,7 +38,17 @@ const SocketProvider = ({ children }) => {
 
     instance.on("connected", () => setConnected(true));
     instance.on("disconnect", () => setConnected(false));
-    instance.on("connect_error", () => setConnected(false));
+
+    instance.on("connect_error", (error) => {
+      setConnected(false);
+
+      //A refused token will be refused every time, so stop reconnecting.
+      //The 401 handler in lib/api.js clears the session on the next request.
+      //Anything else is treated as transient and retried as normal.
+      if (error?.data?.code === "AUTH_FAILED") {
+        instance.disconnect();
+      }
+    });
 
     setSocket(instance);
 

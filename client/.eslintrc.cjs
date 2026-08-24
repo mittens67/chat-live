@@ -33,5 +33,22 @@ module.exports = {
       files: ['src/context/*.jsx'],
       rules: { 'react-refresh/only-export-components': 'off' },
     },
+    {
+      // TypeScript files, added incrementally as components are converted.
+      // Uses the non-type-aware config: it needs no project reference, so
+      // linting stays fast, and `tsc --noEmit` covers what it misses.
+      files: ['**/*.ts', '**/*.tsx'],
+      parser: '@typescript-eslint/parser',
+      plugins: ['@typescript-eslint'],
+      extends: ['plugin:@typescript-eslint/recommended'],
+      rules: {
+        // The base rule misreports types and enums; the TS version understands both
+        'no-unused-vars': 'off',
+        '@typescript-eslint/no-unused-vars': [
+          'error',
+          { argsIgnorePattern: '^_' },
+        ],
+      },
+    },
   ],
 }

@@ -20,6 +20,9 @@ logs/
 # Test coverage
 coverage/
 
+# Local planning / progress notes — working documents, not part of the project
+PROGRESS.md
+
 # Editors
 .vscode/
 .idea/
