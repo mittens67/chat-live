@@ -1,29 +1,22 @@
-import { useState, useEffect } from "react";
-import { useNavigate} from 'react-router-dom';
+import { useState } from "react";
+import { Navigate } from "react-router-dom";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 
 import Login from "../components/Auth/Login";
 import Register from "../components/Auth/Register";
-
-//import "../styles/pages/homePage.scss";
+import { ChatState } from "../context/ChatProvider";
 
 const HomePage = () => {
   const [isLogin, setIsLogin] = useState(true);
-  const [user, setUser] = useState();
-  const toggleLogin = () => setIsLogin(!isLogin);
-  const navigate = useNavigate();
+  const toggleLogin = () => setIsLogin((prev) => !prev);
 
-  useEffect(() => {
-    const userInfo = JSON.parse(localStorage.getItem("userInfo"));
-    setUser(userInfo);
+  //user comes from context; this page used to keep its own unused copy read
+  //straight from localStorage
+  const { user } = ChatState();
 
-    // REmove this, not needed
-    // if(!userInfo) {
-    //  navigate('/');
-    // }
- },[]);
+  if (user?.token) return <Navigate to="/chats" replace />;
 
   return (
     <Container fluid="sm">

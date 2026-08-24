@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ChatState } from "../../context/ChatProvider";
-import axios from "axios";
 
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
@@ -12,89 +11,110 @@ import GroupChatModal from "../ui/GroupChatModal";
 
 import { getSender } from "../../config/chatLogic";
 import { FaPlus } from "react-icons/fa";
+import api, { errorMessage } from "../../lib/api";
 
-const ChatList = ({ fetchAgain, showChatWindow, setShowChatWindow }) => {
-  const [loggedUser, setLoggedUser] = useState();
-  const { setSelectedChat, chats, setChats, user, selectedChat, darkTheme } = ChatState();
+const ChatList = ({ fetchAgain, showChatWindow, openChatWindow }) => {
+  const [error, setError] = useState(null);
+  //user comes from context now; this component used to keep a second copy read
+  //straight from localStorage, which went stale on logout
+  const { setSelectedChat, chats, setChats, user, selectedChat, darkTheme } =
+    ChatState();
 
-  const fetchChats = async () => {
+  const fetchChats = useCallback(async () => {
     try {
-      const config = {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
-      };
-
-      const { data } = await axios.get("/api/chat", config);
+      setError(null);
+      const { data } = await api.get("/chat");
       setChats(data);
-    } catch (error) {
-      //toast
+    } catch (err) {
+      //The empty catch here meant a failed fetch left the spinner up forever
+      //with no indication anything had gone wrong
+      setError(errorMessage(err, "Could not load your chats"));
+      setChats([]);
     }
-  };
+  }, [setChats]);
 
   useEffect(() => {
-    setLoggedUser(JSON.parse(localStorage.getItem("userInfo")));
     fetchChats();
-    // eslint-disable-next-line
-  }, [fetchAgain]);
+  }, [fetchChats, fetchAgain]);
+
+  const renderChats = () => {
+    if (error) {
+      return (
+        <div className="chatList-empty">
+          <p>{error}</p>
+          <Button size="sm" onClick={fetchChats}>
+            Retry
+          </Button>
+        </div>
+      );
+    }
+
+    if (!chats) return <Loading />;
+
+    if (chats.length === 0) {
+      return (
+        <div className="chatList-empty">
+          <p>No chats yet. Search for someone to start one.</p>
+        </div>
+      );
+    }
+
+    return (
+      <Row className="chatList-scrollableRow">
+        {chats.map((chat) => (
+          <Col
+            xs={12}
+            as="button"
+            type="button"
+            className={
+              //Compare ids, not references: after a refetch every chat object
+              //is new, so reference equality silently dropped the highlight
+              selectedChat?._id === chat._id
+                ? "chatList-chat chatList-selected"
+                : "chatList-chat"
+            }
+            onClick={() => {
+              setSelectedChat(chat);
+              openChatWindow();
+            }}
+            key={chat._id}
+          >
+            {!chat.isGroupChat ? getSender(user, chat.users) : chat.chatName}
+          </Col>
+        ))}
+      </Row>
+    );
+  };
 
   return (
-    <>
-      <Container
-        fluid
-        className={
-          showChatWindow
-            ? `d-none d-md-block chatList-container`
-            : `d-block chatList-container`
-        }
-        style={{ height: "100%", backgroundColor: darkTheme? "black" : "white" }}
-      >
-        <Row>
-          <Col className="d-flex justify-content-between pt-2">
-            <p className="chatList-title">My Chats</p>
-            <GroupChatModal>
-              <Button
-                data-toggle="tooltip"
-                title="New Group Chat"
-                className="chatList-btn"
-              >
-                <span className="d-inline d-xl-none">
-                  <FaPlus />
-                </span>
-                <span className="d-none d-xl-inline">New Group Chat</span>
-              </Button>
-              {/* <Button onClick={handler} className="d-md-none">Back to chat list</Button> */}
-            </GroupChatModal>
-          </Col>
-        </Row>
-        {chats ? (
-          <Row className="chatList-scrollableRow">
-            {chats.map((chat) => (
-              <Col
-                xs={12}
-                className={
-                  selectedChat === chat
-                    ? "chatList-chat chatList-selected"
-                    : "chatList-chat"
-                }
-                onClick={() => {
-                  //console.log("setting selected chat");
-                  setSelectedChat(chat);
-                  setShowChatWindow(); 
-                }}
-                key={chat._id}
-              >
-                {!chat.isGroupChat
-                  ? `${getSender(loggedUser, chat.users)}`
-                  : `${chat.chatName}`}
-              </Col>
-            ))}
-          </Row>
-        ) : (
-          <Loading />
-        )}
-      </Container>
-    </>
+    <Container
+      fluid
+      className={
+        showChatWindow
+          ? `d-none d-md-block chatList-container`
+          : `d-block chatList-container`
+      }
+      style={{
+        height: "100%",
+        backgroundColor: darkTheme ? "black" : "white",
+      }}
+    >
+      <Row>
+        <Col className="d-flex justify-content-between pt-2">
+          <h2 className="chatList-title">My Chats</h2>
+          <GroupChatModal>
+            <Button title="New Group Chat" className="chatList-btn">
+              <span className="d-inline d-xl-none">
+                <FaPlus aria-hidden="true" />
+                <span className="visually-hidden">New Group Chat</span>
+              </span>
+              <span className="d-none d-xl-inline">New Group Chat</span>
+            </Button>
+          </GroupChatModal>
+        </Col>
+      </Row>
+      {renderChats()}
+    </Container>
   );
 };
 

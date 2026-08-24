@@ -1,37 +1,22 @@
-import { ChatState } from "../../context/ChatProvider";
 import Button from "react-bootstrap/Button";
 import SingleChat from "../ui/SingleChat";
-import { useEffect } from "react";
-
-//import "../../styles/components/Chat/chatWindow.scss";
 import { FaArrowLeft } from "react-icons/fa";
 
-const ChatWindow = ({
-  fetchAgain,
-  setFetchAgain,
-  showChatWindow,
-  setShowChatWindow,
-}) => {
-  const { selectedChat } = ChatState();
-
+const ChatWindow = ({ setFetchAgain, showChatWindow, closeChatWindow }) => {
   return (
     <div
       style={{ height: "100%" }}
       className={showChatWindow ? "d-block" : "d-none d-md-block"}
     >
       <Button
-        data-toggle="tooltip"
-        title="Go Back To Chat List"
-        onClick={setShowChatWindow}
+        title="Go back to chat list"
+        onClick={closeChatWindow}
         className="d-md-none chatWindow-btn"
       >
-        <FaArrowLeft />
+        <FaArrowLeft aria-hidden="true" />
+        <span className="visually-hidden">Go back to chat list</span>
       </Button>
-      <SingleChat
-        className="d-none"
-        fetchAgain={fetchAgain}
-        setFetchAgain={setFetchAgain}
-      />
+      <SingleChat setFetchAgain={setFetchAgain} />
     </div>
   );
 };

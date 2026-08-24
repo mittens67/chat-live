@@ -3,8 +3,7 @@ import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
-import axios from "axios";
-import toast from 'react-hot-toast';
+import toast from "react-hot-toast";
 
 import Form from "react-bootstrap/Form";
 import FloatingLabel from "react-bootstrap/FloatingLabel";
@@ -12,94 +11,76 @@ import { ChatState } from "../../context/ChatProvider";
 import Loading from "./Loading";
 import UserListItem from "./UserListItem";
 import UserBadgeItem from "./UserBadgeItem";
-//import "../../styles/components/ui/groupChatModal.scss"; 
+import api, { errorMessage } from "../../lib/api";
+import { useUserSearch } from "../../lib/useUserSearch";
+import ModalTrigger from "./ModalTrigger";
 
 const GroupChatModal = ({ children }) => {
   const [show, setShow] = useState(false);
-  const [groupChatName, setGroupChatName] = useState();
+  const [groupChatName, setGroupChatName] = useState("");
   const [selectedUsers, setSelectedUsers] = useState([]);
-  const [search, setSearch] = useState("");
-  const [searchResult, setSearchResult] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const { user, chats, setChats, darkTheme } = ChatState();
+  const { chats, setChats, darkTheme } = ChatState();
+  const { query, setQuery, results, loading, reset } = useUserSearch();
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
 
   const handleGroup = (userToAdd) => {
-    if (selectedUsers.includes(userToAdd)) {
-      toast.error("User Already Exists");
+    if (selectedUsers.some((u) => u._id === userToAdd._id)) {
+      toast.error("That user is already added");
       return;
     }
-
-    setSelectedUsers([...selectedUsers, userToAdd]);
-  };
-
-  const handleSearch = async (query) => {
-    setSearch(query);
-    if (!query) {
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const config = {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
-      };
-      const { data } = await axios.get(`/api/user?search=${search}`, config);
-      setLoading(false);
-      setSearchResult(data);
-    } catch (error) {
-      toast.error("GSomething went wrong");
-      console.log(error);
-      setLoading(false);
-    }
+    setSelectedUsers((prev) => [...prev, userToAdd]);
   };
 
   const handleDelete = (delUser) => {
-    setSelectedUsers(selectedUsers.filter((sel) => sel._id !== delUser._id));
+    setSelectedUsers((prev) => prev.filter((sel) => sel._id !== delUser._id));
   };
 
   const handleSubmit = async () => {
-    if (!groupChatName || !selectedUsers) {
-      toast.error("Please fill fields");
+    //An empty array is truthy, so the old `!selectedUsers` check never caught
+    //a group with no members
+    if (!groupChatName.trim() || selectedUsers.length < 2) {
+      toast.error("Enter a name and pick at least 2 people");
       return;
     }
 
+    setSubmitting(true);
+
     try {
-      const config = {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
-      };
-      const { data } = await axios.post(
-        `/api/chat/group`,
-        {
-          name: groupChatName,
-          users: JSON.stringify(selectedUsers.map((u) => u._id)),
-        },
-        config
-      );
-      setChats([data, ...chats]);
+      const { data } = await api.post("/chat/group", {
+        name: groupChatName.trim(),
+        users: selectedUsers.map((u) => u._id),
+      });
+      setChats([data, ...(chats ?? [])]);
       handleClose();
-      toast.success("Group Created!");
-      setGroupChatName();
+      toast.success("Group created!");
+      setGroupChatName("");
       setSelectedUsers([]);
+      reset();
     } catch (error) {
-      toast.error("Group Could Not Be Created");
+      toast.error(errorMessage(error, "Group could not be created"));
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
     <>
-      <span onClick={handleShow}>{children}</span>
+      <ModalTrigger onClick={handleShow}>{children}</ModalTrigger>
 
-      <Modal show={show} centered onHide={handleClose} data-bs-theme={darkTheme? 'dark': ''}>
+      <Modal
+        show={show}
+        centered
+        onHide={handleClose}
+        data-bs-theme={darkTheme ? "dark" : ""}
+      >
         <Modal.Header closeButton className="border-0 text-center">
-          <Modal.Title className="w-100 groupModal-title">Create Group Chat</Modal.Title>
+          <Modal.Title className="w-100 groupModal-title">
+            Create Group Chat
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body className="text-center w-100">
           <FloatingLabel controlId="name" label="Chat Name*" className="mb-3">
@@ -116,7 +97,8 @@ const GroupChatModal = ({ children }) => {
               required
               type="text"
               placeholder="Add users. Ex: Jon Doe, Jane Doe"
-              onChange={(e) => handleSearch(e.target.value)}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
             />
           </FloatingLabel>
           <Container>
@@ -133,19 +115,25 @@ const GroupChatModal = ({ children }) => {
           {loading ? (
             <Loading />
           ) : (
-            searchResult
+            results
               ?.slice(0, 4)
-              .map((user) => (
+              .map((result) => (
                 <UserListItem
-                  user={user}
-                  handler={() => handleGroup(user)}
-                  key={user._id}
+                  user={result}
+                  handler={() => handleGroup(result)}
+                  key={result._id}
                 />
               ))
           )}
         </Modal.Body>
         <Modal.Footer className="border-0">
-          <Button className="groupModal-btn" onClick={handleSubmit}>Create</Button>
+          <Button
+            className="groupModal-btn"
+            onClick={handleSubmit}
+            disabled={submitting}
+          >
+            {submitting ? "Creating…" : "Create"}
+          </Button>
         </Modal.Footer>
       </Modal>
     </>

@@ -1,10 +1,16 @@
-export const getSender = (loggedUser, users) => {
-  return users[0]._id === loggedUser._id ? users[1].name : users[0].name;
+/** The other participant in a one-to-one chat. */
+const otherUser = (loggedUser, users) => {
+  //Guarded: a malformed or single-participant chat used to throw here
+  if (!Array.isArray(users) || users.length === 0) return null;
+  if (users.length === 1) return users[0];
+  return users[0]._id === loggedUser?._id ? users[1] : users[0];
 };
 
-export const getSenderFull = (loggedUser, users) => {
-  return users[0]._id === loggedUser._id ? users[1] : users[0];
-};
+export const getSender = (loggedUser, users) =>
+  otherUser(loggedUser, users)?.name ?? "Unknown";
+
+export const getSenderFull = (loggedUser, users) =>
+  otherUser(loggedUser, users) ?? {};
 
 export const isSameSender = (messages, m, i, userId) => {
   return (
@@ -24,8 +30,6 @@ export const isLastMessage = (messages, i, userId) => {
 };
 
 export const isSameSenderMargin = (messages, m, i, userId) => {
-
-
   if (
     i < messages.length - 1 &&
     messages[i + 1].sender._id === m.sender._id &&
@@ -46,20 +50,32 @@ export const isSameUser = (messages, m, i) => {
   return i > 0 && messages[i - 1].sender._id === m.sender._id;
 };
 
-//Check to see if a string is a url
-export const isValidURL = function (str) {
-  var pattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
-    '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+ // domain name
-    '((\\d{1,3}\\.){3}\\d{1,3}))'+ // OR ip (v4) address
-    '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ // port and path
-    '(\\?[;&a-z\\d%_.~+=-]*)?'+ // query string
-    '(\\#[-a-z\\d_]*)?$','i'); // fragment locator
-  return !!pattern.test(str);
-}
+/**
+ * Whether a message body is a link we should render as one.
+ *
+ * Requires an explicit http/https protocol. The previous pattern made the
+ * protocol optional, so ordinary text like "example.com" became a clickable
+ * link, and any other scheme (javascript:, data:) was a rendering hazard.
+ */
+export const isValidURL = (str) => {
+  if (typeof str !== "string") return false;
 
+  try {
+    const { protocol } = new URL(str.trim());
+    return protocol === "http:" || protocol === "https:";
+  } catch {
+    return false;
+  }
+};
 
-export const isUrlImage = function (str) {
-  let pattern = new RegExp(/\/\/(\S+?(?:jpe?g|png|gif))/ig);
-  return !!pattern.test(str);
+/** Whether a URL points at something we can render inline as an image. */
+export const isUrlImage = (str) => {
+  if (!isValidURL(str)) return false;
 
-}
+  try {
+    const { pathname } = new URL(str.trim());
+    return /\.(jpe?g|png|gif|webp|avif)$/i.test(pathname);
+  } catch {
+    return false;
+  }
+};

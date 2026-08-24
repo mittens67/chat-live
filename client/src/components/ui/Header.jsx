@@ -5,19 +5,18 @@ import Button from "react-bootstrap/Button";
 import Badge from "react-bootstrap/Badge";
 import { FaSearch, FaBell } from "react-icons/fa";
 
-//import "../../styles/components/ui/header.scss";
 import { ChatState } from "../../context/ChatProvider";
 import ProfileModal from "./ProfileModal";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import SearchSidePanel from "./SearchSidePanel";
 import { getSender } from "../../config/chatLogic";
+import { DEFAULT_AVATAR, onAvatarError } from "../../lib/defaultAvatar";
 
 const Header = () => {
   const {
-    setChats,
-    setSelectedChat,
-    setUser,
     user,
+    logout,
+    setSelectedChat,
     notification,
     setNotification,
     darkTheme,
@@ -25,98 +24,93 @@ const Header = () => {
   } = ChatState();
   const navigate = useNavigate();
 
-  const logoutHandler = (e) => {
-    e.preventDefault();
-    localStorage.removeItem("userInfo");
-    setUser();
-    setSelectedChat();
-    setChats(null);
+  const logoutHandler = () => {
+    //logout clears context and storage together; the socket provider tears the
+    //connection down when the user goes away
+    logout();
     navigate("/");
   };
 
   return (
-    <>
-      <Navbar expand="xs" className="header-nav">
-        <Container fluid>
-          <SearchSidePanel user={user}>
-            <Button
+    <Navbar expand="xs" className="header-nav">
+      <Container fluid>
+        <SearchSidePanel>
+          <Button variant="link" title="Search User" className="header-btn">
+            <FaSearch aria-hidden="true" />
+            <span className="header-btn__text">Search User</span>
+          </Button>
+        </SearchSidePanel>
+        {/* as={Link} keeps this a client-side navigation - a raw href
+            triggered a full page reload and a fresh socket connection */}
+        <Navbar.Brand as={Link} to="/chats" className="header-brand">
+          Chat Live
+        </Navbar.Brand>
+        <div className="header-container me-5">
+          <Dropdown>
+            <Dropdown.Toggle
+              className="header-dropdown"
               variant="link"
-              data-toggle="tooltip"
-              title="Search User"
-              className="header-btn"
+              //Unique ids: both toggles used to share "dropdown-basic"
+              id="notifications-dropdown"
+              aria-label={`Notifications (${notification.length} unread)`}
             >
-              <FaSearch />
-              <span className="header-btn__text">Search User</span>
-            </Button>
-          </SearchSidePanel>
-          <Navbar.Brand href="/chats" className="header-brand">
-            Chat Live
-          </Navbar.Brand>
-          <div className="header-container me-5">
-            {/* <Button variant="link" className="nav-btn"><FaBell /></Button> */}
-            <Dropdown>
-              <Dropdown.Toggle
-                className="header-dropdown"
-                variant="link"
-                id="dropdown-basic"
-              >
-                <FaBell />
-                <Badge
-                  bg={notification.length ? `danger` : `secondary`}
-                  variant="light"
+              <FaBell aria-hidden="true" />
+              <Badge bg={notification.length ? "danger" : "secondary"}>
+                {notification.length}
+              </Badge>
+            </Dropdown.Toggle>
+
+            <Dropdown.Menu style={{ position: "absolute" }}>
+              {!notification.length && (
+                <Dropdown.ItemText>No new messages</Dropdown.ItemText>
+              )}
+              {notification.map((n) => (
+                <Dropdown.Item
+                  key={n._id}
+                  onClick={() => {
+                    setSelectedChat(n.chat);
+                    setNotification((prev) =>
+                      prev.filter((notif) => notif._id !== n._id)
+                    );
+                  }}
                 >
-                  {notification.length}
-                </Badge>
-              </Dropdown.Toggle>
-
-              <Dropdown.Menu style={{ position: "absolute" }}>
-                {!notification.length && "No New Messages"}
-                {notification.map((n) => (
-                  <Dropdown.Item
-                    key={n._id}
-                    onClick={() => {
-                      setSelectedChat(n.chat);
-                      setNotification(
-                        notification.filter((notif) => notif !== n)
-                      );
-                    }}
-                  >
-                    {n.chat.isGroupChat
-                      ? `New Message in ${n.chat.chatName}`
-                      : `New Message from ${getSender(user, n.chat.users)}`}
-                  </Dropdown.Item>
-                ))}
-              </Dropdown.Menu>
-            </Dropdown>
-            <Dropdown>
-              <Dropdown.Toggle
-                className="header-dropdown"
-                variant="link"
-                id="dropdown-basic"
-              >
-                <img
-                  src={user.picture}
-                  alt={`${user.name}`}
-                  className="avatar"
-                />
-              </Dropdown.Toggle>
-
-              <Dropdown.Menu style={{ position: "absolute", right: "10rem" }}>
-                <ProfileModal user={user}>
-                  <Dropdown.Item>My Profile</Dropdown.Item>
-                </ProfileModal>
-                <Dropdown.Divider />
-                <Dropdown.Item onClick={() => setDarkTheme(!darkTheme)}>
-                  Switch Theme
+                  {n.chat.isGroupChat
+                    ? `New message in ${n.chat.chatName}`
+                    : `New message from ${getSender(user, n.chat.users)}`}
                 </Dropdown.Item>
-                <Dropdown.Divider />
-                <Dropdown.Item onClick={logoutHandler}>Log Out</Dropdown.Item>
-              </Dropdown.Menu>
-            </Dropdown>
-          </div>
-        </Container>
-      </Navbar>
-    </>
+              ))}
+            </Dropdown.Menu>
+          </Dropdown>
+          <Dropdown>
+            <Dropdown.Toggle
+              className="header-dropdown"
+              variant="link"
+              id="account-dropdown"
+              aria-label="Account menu"
+            >
+              <img
+                src={user.picture || DEFAULT_AVATAR}
+                onError={onAvatarError}
+                alt={user.name}
+                className="avatar"
+              />
+            </Dropdown.Toggle>
+
+            <Dropdown.Menu align="end">
+              <ProfileModal user={user}>
+                <Dropdown.Item>My Profile</Dropdown.Item>
+              </ProfileModal>
+              <Dropdown.Divider />
+              <Dropdown.Item onClick={() => setDarkTheme(!darkTheme)}>
+                Switch Theme
+              </Dropdown.Item>
+              <Dropdown.Divider />
+              <Dropdown.Item onClick={logoutHandler}>Log Out</Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown>
+        </div>
+      </Container>
+    </Navbar>
   );
 };
 

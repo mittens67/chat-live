@@ -1,64 +1,54 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import axios from "axios";
 
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 import FloatingLabel from "react-bootstrap/FloatingLabel";
 
 import { ChatState } from "../../context/ChatProvider";
+import api, { errorMessage } from "../../lib/api";
 
 const Login = ({ toggleLogin }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState();
-  const { setUser } = ChatState();
+  const [loading, setLoading] = useState(false);
+  const { login } = ChatState();
   const navigate = useNavigate();
 
-  const handleSubmit = async () => {
-    setLoading(true);
+  //Takes the event and prevents the default submit. Without this the browser
+  //navigated away mid-request and the login was aborted.
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
     if (!email || !password) {
-      toast.error("Please Fill All the Fields");
-      setLoading(false);
+      toast.error("Please fill all the fields");
       return;
     }
 
+    setLoading(true);
+
     try {
-      const config = {
-        headers: {
-          "Content-type": "application/json",
-        },
-      };
-
-      const { data } = await axios.post(
-        "/api/user/login",
-        { email, password },
-        config
-      );
-
-      toast.success("Login Successful!");
-      //setUser(data);
-      //console.log(data);
-      localStorage.setItem("userInfo", JSON.stringify(data));
-      setUser(data);
-      setLoading(false);
+      const { data } = await api.post("/user/login", { email, password });
+      login(data);
+      toast.success("Login successful!");
       navigate("/chats");
     } catch (error) {
-      toast.error("Invalid Credentials! Please try again.");
-      //console.log(error);
+      toast.error(errorMessage(error, "Invalid credentials, please try again"));
+    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Form className="d-grid gap-2">
+    <Form className="d-grid gap-2" onSubmit={handleSubmit}>
       <h1 className="auth-form__title">Login</h1>
 
       <FloatingLabel controlId="email" label="Email Address*" className="mb-3">
         <Form.Control
           required
           type="email"
+          autoComplete="username"
           placeholder="Enter your email address"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -68,19 +58,15 @@ const Login = ({ toggleLogin }) => {
         <Form.Control
           required
           type="password"
+          autoComplete="current-password"
           placeholder="Enter your password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
       </FloatingLabel>
 
-      <Button
-        className="auth-btn"
-        type="submit"
-        disabled={loading}
-        onClick={!loading ? handleSubmit : null}
-      >
-        {loading ? "Loading" : "Login"}
+      <Button className="auth-btn" type="submit" disabled={loading}>
+        {loading ? "Logging in…" : "Login"}
       </Button>
       <p style={{ textAlign: "center" }} className="mt-4">
         ( Don&apos;t have an account yet? )

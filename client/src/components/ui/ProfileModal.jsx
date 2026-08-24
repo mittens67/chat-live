@@ -4,7 +4,8 @@ import Modal from "react-bootstrap/Modal";
 import Image from "react-bootstrap/Image";
 import { FaEye } from "react-icons/fa";
 import { ChatState } from "../../context/ChatProvider";
-//import "../../styles/components/ui/modal.scss";
+import ModalTrigger from "./ModalTrigger";
+import { DEFAULT_AVATAR, onAvatarError } from "../../lib/defaultAvatar";
 
 const ProfileModal = ({ user, children }) => {
   const [show, setShow] = useState(false);
@@ -15,10 +16,14 @@ const ProfileModal = ({ user, children }) => {
   return (
     <>
       {children ? (
-        <span onClick={handleShow}>{children}</span>
+        <ModalTrigger onClick={handleShow}>{children}</ModalTrigger>
       ) : (
-        <Button className="modal-btn" onClick={handleShow}>
-          <FaEye />
+        <Button
+          className="modal-btn"
+          onClick={handleShow}
+          aria-label={`View ${user.name}'s profile`}
+        >
+          <FaEye aria-hidden="true" />
         </Button>
       )}
 
@@ -28,7 +33,8 @@ const ProfileModal = ({ user, children }) => {
         </Modal.Header>
         <Modal.Body className="text-center w-100">
           <Image
-            src={user.picture}
+            src={user.picture || DEFAULT_AVATAR}
+            onError={onAvatarError}
             alt={user.name}
             style={{ width: "7rem" }}
             roundedCircle

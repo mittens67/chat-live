@@ -1,106 +1,82 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { ChatState } from "../../context/ChatProvider";
-import axios from "axios";
-import Button from "react-bootstrap/Button";
 import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Offcanvas from "react-bootstrap/Offcanvas";
-import InputGroup from "react-bootstrap/InputGroup";
 import Form from "react-bootstrap/Form";
+import InputGroup from "react-bootstrap/InputGroup";
 import { FaSearch } from "react-icons/fa";
 
 import Loading from "./Loading";
 import UserListItem from "./UserListItem";
+import api, { errorMessage } from "../../lib/api";
+import { useUserSearch } from "../../lib/useUserSearch";
+import ModalTrigger from "./ModalTrigger";
 
-const SearchSidePanel = ({ user, children }) => {
+const SearchSidePanel = ({ children }) => {
   const [show, setShow] = useState(false);
-  const [search, setSearch] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [loadingChat, setLoadingChat] = useState(false);
 
   const { setSelectedChat, chats, setChats, darkTheme } = ChatState();
+  const { query, setQuery, results, loading } = useUserSearch();
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
 
-  const handleSearch = async () => {
-    if (!search) {
-      toast.error("Please enter a search term");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const config = {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
-      };
-
-      const { data } = await axios.get(`/api/user?search=${search}`, config);
-
-      setLoading(false);
-      setSearchResults(data);
-    } catch (err) {
-      toast.error("Something went wrong with searching");
-      setLoading(false);
-    }
-  };
-
   const accessChat = async (userId) => {
-    try {
-      setLoadingChat(true);
-      const config = {
-        headers: {
-          "Content-type": "application/json",
-          Authorization: `Bearer ${user.token}`,
-        },
-      };
-      const { data } = await axios.post(`/api/chat`, { userId }, config);
-      //console.log(data);
+    setLoadingChat(true);
 
-      if (!chats.find((c) => c._id === data._id)) setChats([data, ...chats]);
+    try {
+      const { data } = await api.post("/chat", { userId });
+
+      //chats starts as null, so this used to throw if a result was clicked
+      //before the chat list had loaded
+      const existing = chats ?? [];
+      if (!existing.find((c) => c._id === data._id)) {
+        setChats([data, ...existing]);
+      }
+
       setSelectedChat(data);
-      setLoadingChat(false);
       handleClose();
     } catch (err) {
-      toast.error("Something went wrong with getting the chat!");
-      console.log(err);
+      toast.error(errorMessage(err, "Could not open that chat"));
+    } finally {
       setLoadingChat(false);
     }
   };
 
   return (
     <>
-      {children ? (
-        <span onClick={handleShow}>{children}</span>
-      ) : (
-        <Button variant="primary" onClick={handleShow}>
-          Launch
-        </Button>
-      )}
+      <ModalTrigger onClick={handleShow}>{children}</ModalTrigger>
 
-      <Offcanvas show={show} onHide={handleClose} data-bs-theme={darkTheme? 'dark': ''}>
+      <Offcanvas
+        show={show}
+        onHide={handleClose}
+        data-bs-theme={darkTheme ? "dark" : ""}
+      >
         <Offcanvas.Header closeButton>
-          <Offcanvas.Title className="sidePanel-title">Search Users</Offcanvas.Title>
+          <Offcanvas.Title className="sidePanel-title">
+            Search Users
+          </Offcanvas.Title>
         </Offcanvas.Header>
         <Offcanvas.Body>
           <Container>
             <Row className="pb-2">
               <Col xs={12}>
+                {/* Results come from a debounced hook now, so there is no
+                    search button to press and Enter no longer does nothing */}
                 <InputGroup className="sidePanel-search">
+                  <InputGroup.Text>
+                    <FaSearch aria-hidden="true" />
+                  </InputGroup.Text>
                   <Form.Control
-                    placeholder="Search"
-                    aria-label="Search"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search by name or email"
+                    aria-label="Search users"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
                   />
-                  <Button variant="outline-secondary" onClick={handleSearch}>
-                    <FaSearch />
-                  </Button>
                 </InputGroup>
               </Col>
             </Row>
@@ -111,9 +87,9 @@ const SearchSidePanel = ({ user, children }) => {
                 </Col>
               </Row>
             ) : (
-              searchResults?.map((result) => (
+              results?.map((result) => (
                 <UserListItem
-                  key={result?._id}
+                  key={result._id}
                   user={result}
                   handler={() => accessChat(result._id)}
                 />

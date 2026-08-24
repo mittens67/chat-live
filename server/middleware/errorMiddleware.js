@@ -4,12 +4,29 @@ const notFound = (req, res, next) => {
   next(error);
 };
 
+// eslint-disable-next-line no-unused-vars -- Express identifies error handlers by arity
 const errorHandler = (err, req, res, next) => {
-  const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
-  res.status(statusCode);
+  //Any success status still set on the response is wrong for an error body,
+  //not just 200 - a throw after res.status(201) would otherwise report success
+  const statusCode = res.statusCode < 400 ? 500 : res.statusCode;
+
+  //Mongoose validation and cast failures are client errors, not server errors
+  const isClientError =
+    err.name === "ValidationError" || err.name === "CastError";
+
+  const finalStatus = statusCode === 500 && isClientError ? 400 : statusCode;
+
+  //Without this a production 500 leaves no trace anywhere
+  if (finalStatus >= 500) {
+    console.error(err);
+  }
+
+  res.status(finalStatus);
   res.json({
     message: err.message,
-    stack: process.env.NODE_ENV === "production" ? null : err.stack,
+    //Fail closed: only expose stacks when explicitly in development, so an
+    //unset or misspelled NODE_ENV hides them rather than leaking them
+    stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
   });
 };
 

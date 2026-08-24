@@ -1,8 +1,7 @@
-import axios from "axios";
 import { useState } from "react";
 import UserBadgeItem from "./UserBadgeItem";
 import { ChatState } from "../../context/ChatProvider";
-import toast from 'react-hot-toast';
+import toast from "react-hot-toast";
 
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
@@ -11,155 +10,125 @@ import Form from "react-bootstrap/Form";
 import InputGroup from "react-bootstrap/InputGroup";
 import Loading from "./Loading";
 import UserListItem from "./UserListItem";
-//import "../../styles/components/ui/updateGroupChatModal.scss";
-//import "../../styles/components/ui/modal.scss";
 import { FaEdit } from "react-icons/fa";
+import api, { errorMessage } from "../../lib/api";
+import { useUserSearch } from "../../lib/useUserSearch";
 
-const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
+//fetchAgain is no longer needed as a prop: the flips below use the functional
+//updater form, so this never has to read the current value
+const UpdateGroupChatModal = ({ fetchMessages, setFetchAgain }) => {
   const [show, setShow] = useState(false);
-  const [groupChatName, setGroupChatName] = useState();
-  const [search, setSearch] = useState("");
-  const [searchResult, setSearchResult] = useState([]);
+  const [groupChatName, setGroupChatName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [renameloading, setRenameLoading] = useState(false);
+  const [renameLoading, setRenameLoading] = useState(false);
 
   const { selectedChat, setSelectedChat, user, darkTheme } = ChatState();
+  const { query, setQuery, results, loading: searching } = useUserSearch();
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
 
+  const isAdmin = selectedChat?.groupAdmin?._id === user._id;
 
-  const handleAddUser = async (user1) => {
-    if (selectedChat.users.find((u) => u._id === user1._id)) {
-      toast.error("Could not get user");
+  const handleAddUser = async (userToAdd) => {
+    if (selectedChat.users.find((u) => u._id === userToAdd._id)) {
+      toast.error("That user is already in this group");
       return;
     }
 
-    if (selectedChat.groupAdmin._id !== user._id) {
-      toast.error("Admin Only!");
+    //The server enforces this too; checking here just avoids a pointless round
+    //trip and gives a clearer message
+    if (!isAdmin) {
+      toast.error("Only the group admin can add members");
       return;
     }
+
+    setLoading(true);
 
     try {
-      setLoading(true);
-      const config = {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
-      };
-      const { data } = await axios.put(
-        `/api/chat/groupadd`,
-        {
-          chatId: selectedChat._id,
-          userId: user1._id,
-        },
-        config
-      );
-
+      const { data } = await api.put("/chat/groupadd", {
+        chatId: selectedChat._id,
+        userId: userToAdd._id,
+      });
       setSelectedChat(data);
-      setFetchAgain(!fetchAgain);
-      setLoading(false);
+      setFetchAgain((prev) => !prev);
     } catch (error) {
-      toast.error("Something went wrong!");
-      setLoading(false);
-    }
-    setGroupChatName("");
-  };
-
-
-  const handleSearch = async (query) => {
-    setSearch(query);
-    if (!query) {
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const config = {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
-      };
-      const { data } = await axios.get(`/api/user?search=${search}`, config);
-      setLoading(false);
-      setSearchResult(data);
-    } catch (error) {
-      toast.error("Something went wrong!");
+      toast.error(errorMessage(error, "Could not add that user"));
+    } finally {
       setLoading(false);
     }
   };
 
   const handleRename = async () => {
-    if (!groupChatName) return;
+    const name = groupChatName.trim();
+    if (!name) return;
+
+    setRenameLoading(true);
 
     try {
-      setRenameLoading(true);
-      const config = {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
-      };
-      const { data } = await axios.put(
-        `/api/chat/rename`,
-        {
-          chatId: selectedChat._id,
-          chatName: groupChatName,
-        },
-        config
-      );
-
-      // setSelectedChat("");
+      const { data } = await api.put("/chat/rename", {
+        chatId: selectedChat._id,
+        chatName: name,
+      });
       setSelectedChat(data);
-      setFetchAgain(!fetchAgain);
-      setRenameLoading(false);
+      setFetchAgain((prev) => !prev);
+      setGroupChatName("");
     } catch (error) {
-      toast.error("Could not rename group");
+      toast.error(errorMessage(error, "Could not rename group"));
+    } finally {
       setRenameLoading(false);
     }
-    setGroupChatName("");
   };
 
-  const handleRemove = async (user1) => {
-    if (selectedChat.groupAdmin._id !== user._id && user1._id !== user._id) {
-      toast.error("Could not perform remove");
+  const handleRemove = async (userToRemove) => {
+    const isSelf = userToRemove._id === user._id;
+
+    if (!isAdmin && !isSelf) {
+      toast.error("Only the group admin can remove members");
       return;
     }
-    
+
+    setLoading(true);
 
     try {
-      setLoading(true);
-      const config = {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
-      };
-      const { data } = await axios.put(
-        `/api/chat/groupremove`,
-        {
-          chatId: selectedChat._id,
-          userId: user1._id,
-        },
-        config
-      );
+      const { data } = await api.put("/chat/groupremove", {
+        chatId: selectedChat._id,
+        userId: userToRemove._id,
+      });
 
-      user1._id === user._id ? setSelectedChat() : setSelectedChat(data);
-      setFetchAgain(!fetchAgain);
-      fetchMessages();
-      setLoading(false);
+      if (isSelf) {
+        //Leaving closes the chat; there is nothing left to refetch
+        setSelectedChat(undefined);
+        handleClose();
+      } else {
+        setSelectedChat(data);
+        fetchMessages();
+      }
+
+      setFetchAgain((prev) => !prev);
     } catch (error) {
-      toast.error("Something went wrong");
+      toast.error(errorMessage(error, "Could not remove that user"));
+    } finally {
       setLoading(false);
     }
-    setGroupChatName("");
   };
 
   return (
     <>
-      <Button className="modal-btn" onClick={handleShow}><FaEdit/></Button>
+      <Button className="modal-btn" onClick={handleShow} aria-label="Edit group">
+        <FaEdit aria-hidden="true" />
+      </Button>
 
-      <Modal show={show} centered onHide={handleClose} data-bs-theme={darkTheme ? 'dark' : ''}>
+      <Modal
+        show={show}
+        centered
+        onHide={handleClose}
+        data-bs-theme={darkTheme ? "dark" : ""}
+      >
         <Modal.Header closeButton className="border-0 text-center">
-          <Modal.Title className="w-100 updateGroup-title">{selectedChat.chatName}</Modal.Title>
+          <Modal.Title className="w-100 updateGroup-title">
+            {selectedChat.chatName}
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body className="text-center w-100 p-5">
           <Row className="mb-3">
@@ -167,8 +136,14 @@ const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
               <UserBadgeItem
                 key={u._id}
                 user={u}
-                admin={selectedChat.groupAdmin}
-                handler={() => handleRemove(u)}
+                isAdmin={selectedChat.groupAdmin?._id === u._id}
+                //Only show a remove control where the action is actually
+                //permitted, instead of on every member
+                handler={
+                  isAdmin || u._id === user._id
+                    ? () => handleRemove(u)
+                    : undefined
+                }
               />
             ))}
           </Row>
@@ -176,32 +151,40 @@ const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
           <InputGroup className="mb-3">
             <Form.Control
               placeholder="Rename Group"
-              aria-label="Enter new Group Name"
+              aria-label="New group name"
+              value={groupChatName}
               onChange={(e) => setGroupChatName(e.target.value)}
             />
-            <Button className="updateGroup-btn" loading={`${renameloading}`} onClick={handleRename}>
-              Update
+            <Button
+              className="updateGroup-btn"
+              disabled={renameLoading}
+              onClick={handleRename}
+            >
+              {renameLoading ? "Saving…" : "Update"}
             </Button>
           </InputGroup>
           <Form.Control
-              placeholder="Add Members"
-              aria-label="Search Members"
-              onChange={(e) => handleSearch(e.target.value)}
+            placeholder="Add Members"
+            aria-label="Search members to add"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
           />
-          {
-            loading? <Loading /> : (
-                searchResult?.map((user) => (
-                  <UserListItem
-                    key={user._id}
-                    user={user}
-                    handler={() => handleAddUser(user)}
-                  />
-                ))
-              )
-          }
+          {searching || loading ? (
+            <Loading />
+          ) : (
+            results?.map((result) => (
+              <UserListItem
+                key={result._id}
+                user={result}
+                handler={() => handleAddUser(result)}
+              />
+            ))
+          )}
         </Modal.Body>
         <Modal.Footer className="border-0">
-          <Button onClick={() => handleRemove(user)} variant="danger">Leave Group</Button>
+          <Button onClick={() => handleRemove(user)} variant="danger">
+            Leave Group
+          </Button>
         </Modal.Footer>
       </Modal>
     </>

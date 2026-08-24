@@ -5,8 +5,14 @@ import Modal from "react-bootstrap/Modal";
 import Form from "react-bootstrap/Form";
 import toast from "react-hot-toast";
 import { ChatState } from "../../context/ChatProvider";
+import {
+  uploadToCloudinary,
+  IMAGE_TYPES,
+  DOCUMENT_TYPES,
+} from "../../lib/cloudinary";
+import ModalTrigger from "./ModalTrigger";
 
-const IMAGE = "image/";
+const IMAGE = "image/*";
 const FILE = ".xlsx,.xls,image/*,.doc, .docx,.ppt, .pptx,.txt,.pdf";
 
 const FileUploadModal = ({ children, title, handler }) => {
@@ -14,115 +20,69 @@ const FileUploadModal = ({ children, title, handler }) => {
   const [loading, setLoading] = useState(false);
   const [doc, setDoc] = useState();
 
-  const { selectedChat, user } = ChatState();
+  const { selectedChat, user, darkTheme } = ChatState();
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
 
-  const postDetails = (file, title) => {
+  const postDetails = async (file, title) => {
     setLoading(true);
 
-    if (file === undefined) {
-      toast.error("No File Provided");
-      setLoading(false);
-      return;
-    }
+    const isDocument = title === "File";
 
-    if (title === "File") {
-      //File Upload stuff
-      if (
-        file.type === "application/msword" ||
-        file.type === "application/vnd.ms-excel" ||
-        file.type === "application/vnd.ms-powerpoint" ||
-        file.type === "text/plain" ||
-        file.type === "application/pdf"
-      ) {
-        const data = new FormData();
-        data.append("file", file);
-        data.append("upload_preset", "chat-live");
-        data.append("cloud_name", "dwzam97oe");
-        fetch("https://api.cloudinary.com/v1_1/dwzam97oe/auto/upload", {
-          method: "post",
-          body: data,
+    try {
+      setDoc(
+        await uploadToCloudinary(file, {
+          resourceType: isDocument ? "auto" : "image",
+          allowedTypes: isDocument ? DOCUMENT_TYPES : IMAGE_TYPES,
         })
-          .then((res) => res.json())
-          .then((data) => {
-            setDoc(data.url.toString());
-            //console.log(data.url.toString());
-            setLoading(false);
-          })
-          .catch((err) => {
-            console.log(err);
-            setLoading(false);
-          });
-      } else {
-        //console.log(`File upload failure`);
-        toast.error("Failed to upload image!");
-        setLoading(false);
-        return;
-      }
-    } else {
-      //Image Upload stuff
-      if (file.type === "image/jpeg" || file.type === "image/png") {
-        const data = new FormData();
-        data.append("file", file);
-        data.append("upload_preset", "chat-live");
-        data.append("cloud_name", "dwzam97oe");
-        fetch("https://api.cloudinary.com/v1_1/dwzam97oe/image/upload", {
-          method: "post",
-          body: data,
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            setDoc(data.url.toString());
-            //console.log(data.url.toString());
-            setLoading(false);
-          })
-          .catch((err) => {
-            console.log(err);
-            setLoading(false);
-          });
-      } else {
-        //console.log(`image upload failure`);
-        toast.error("Failed to upload image!");
-        setLoading(false);
-        return;
-      }
+      );
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
     }
   };
-  const handleSendFile = async() => {
+  const handleSendFile = async () => {
+    const content = doc;
+    setDoc();
+
     try {
-        //
-        const config = {
-            headers: {
-              "Content-type": "application/json",
-              Authorization: `Bearer ${user.token}`,
-            },
-          };
-          setDoc(); // This is async, so we should be good with sending post
-  
-          const { data } = await axios.post(
-            "/api/message",
-            {
-              content: doc,
-              chatId: selectedChat,
-            },
-            config
-          );
-        handler(data);
-        handleClose();
+      const config = {
+        headers: {
+          "Content-type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+      };
+
+      const { data } = await axios.post(
+        "/api/message",
+        {
+          content,
+          chatId: selectedChat._id,
+        },
+        config
+      );
+      handler(data);
+      handleClose();
     } catch (error) {
-        //
-        handleClose();
-        toast.error("Something went wrong with sending message");
+      handleClose();
+      toast.error(
+        error.response?.data?.message ?? "Something went wrong with sending message"
+      );
     }
-  }
+  };
 
   return (
     <>
-      <span onClick={handleShow}>{children}</span>
+      <ModalTrigger onClick={handleShow}>{children}</ModalTrigger>
 
-      <Modal show={show} centered onHide={handleClose}>
+      <Modal
+        show={show}
+        centered
+        onHide={handleClose}
+        data-bs-theme={darkTheme ? "dark" : ""}
+      >
         <Modal.Header closeButton className="border-0 text-center">
           <Modal.Title className="w-100">{`Upload ${title}`}</Modal.Title>
         </Modal.Header>

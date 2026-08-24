@@ -6,9 +6,18 @@
         height: 5rem;
         align-items: center;
         padding: .5rem;
+        // Reset the browser's default button chrome now that this is a <button>
+        width: 100%;
+        border: none;
+        text-align: left;
 
         &:hover {
             background-color: $color-secondary;
+        }
+
+        &:focus-visible {
+            outline: 2px solid $color-primary;
+            outline-offset: -2px;
         }
     }
 
