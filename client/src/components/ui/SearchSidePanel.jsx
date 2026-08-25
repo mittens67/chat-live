@@ -19,7 +19,7 @@ const SearchSidePanel = ({ children }) => {
   const [show, setShow] = useState(false);
   const [loadingChat, setLoadingChat] = useState(false);
 
-  const { setSelectedChat, chats, setChats, darkTheme } = ChatState();
+  const { setSelectedChat, chats, setChats } = ChatState();
   const { query, setQuery, results, loading } = useUserSearch();
 
   const handleClose = () => setShow(false);
@@ -54,7 +54,6 @@ const SearchSidePanel = ({ children }) => {
       <Offcanvas
         show={show}
         onHide={handleClose}
-        data-bs-theme={darkTheme ? "dark" : ""}
       >
         <Offcanvas.Header closeButton>
           <Offcanvas.Title className="sidePanel-title">

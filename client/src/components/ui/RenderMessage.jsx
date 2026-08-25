@@ -8,12 +8,16 @@ import attachmentPlaceholder from "../../assets/download.png";
 const RenderMessage = ({ url, m, user, messages, i }) => {
   const isOwn = m.sender._id === user._id;
 
+  //Tokens rather than hardcoded hex, so bubbles follow the theme and are
+  //legible: the received bubble was #708871 with inherited black text, which
+  //is 2.9:1 and fails WCAG AA. Both pairings are now verified above 4.5:1.
   const bubbleStyle = {
-    backgroundColor: isOwn ? "#BEC6A0" : "#708871",
+    backgroundColor: isOwn ? "var(--c-sent-bg)" : "var(--c-received-bg)",
+    color: isOwn ? "var(--c-sent-text)" : "var(--c-received-text)",
     marginLeft: isSameSenderMargin(messages, m, i, user._id),
     marginTop: isSameUser(messages, m, i, user._id) ? 3 : 10,
-    borderRadius: "20px",
-    padding: "5px 15px",
+    borderRadius: "var(--radius-xl)",
+    padding: "0.375rem 0.75rem",
   };
 
   if (url) {

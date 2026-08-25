@@ -32,6 +32,9 @@ const ChatProvider = ({ children }) => {
 
   useEffect(() => {
     localStorage.setItem(THEME_KEY, JSON.stringify(darkTheme));
+    //A single root attribute drives every themed token, replacing the root
+    //class, the inline background styles, and the per-modal data-bs-theme props
+    document.documentElement.dataset.theme = darkTheme ? "dark" : "light";
   }, [darkTheme]);
 
   const logout = () => {

@@ -17,15 +17,23 @@ const HomePage = lazy(() => import("./pages/HomePage"));
 const ChatPage = lazy(() => import("./pages/ChatPage"));
 
 const NotFound = () => (
-  <div className="not-found">
-    <h1>404</h1>
-    <p>That page does not exist.</p>
-    <Link to="/">Go home</Link>
+  <div className="flex min-h-dvh flex-col items-center justify-center gap-3 p-6 text-center">
+    <p className="text-3xl font-semibold text-accent">404</p>
+    <h1 className="text-xl font-semibold">That page does not exist.</h1>
+    <p className="text-muted">
+      The link may be broken, or the page may have moved.
+    </p>
+    <Link
+      to="/"
+      className="mt-2 rounded-md bg-accent px-4 py-2 font-medium text-on-accent no-underline hover:bg-accent-hover"
+    >
+      Go home
+    </Link>
   </div>
 );
 
 function App() {
-  const { darkTheme, logout } = ChatState();
+  const { logout } = ChatState();
 
   //Lets the axios response interceptor clear context state on a 401, not just
   //localStorage - otherwise an expired token left the UI in a logged-in state
@@ -35,7 +43,9 @@ function App() {
   }, [logout]);
 
   return (
-    <div className={darkTheme ? "theme-dark app" : "theme-light app"}>
+    /* Theme now comes from data-theme on <html>, set in ChatProvider - no
+       theme class, and no radial-gradient background fighting the panes */
+    <div className="min-h-dvh bg-bg text-text">
       <ErrorBoundary>
         <SocketProvider>
           <Router>

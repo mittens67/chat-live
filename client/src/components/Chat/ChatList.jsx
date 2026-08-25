@@ -17,7 +17,7 @@ const ChatList = ({ fetchAgain, showChatWindow, openChatWindow }) => {
   const [error, setError] = useState(null);
   //user comes from context now; this component used to keep a second copy read
   //straight from localStorage, which went stale on logout
-  const { setSelectedChat, chats, setChats, user, selectedChat, darkTheme } =
+  const { setSelectedChat, chats, setChats, user, selectedChat } =
     ChatState();
 
   const fetchChats = useCallback(async () => {
@@ -89,15 +89,11 @@ const ChatList = ({ fetchAgain, showChatWindow, openChatWindow }) => {
   return (
     <Container
       fluid
-      className={
-        showChatWindow
-          ? `d-none d-md-block chatList-container`
-          : `d-block chatList-container`
-      }
-      style={{
-        height: "100%",
-        backgroundColor: darkTheme ? "black" : "white",
-      }}
+      /* Tailwind visibility, not Bootstrap's d-none/d-block: those are
+         `display: ... !important` and would override the container's grid */
+      className={`chatList-container ${
+        showChatWindow ? "hidden md:grid" : "grid"
+      }`}
     >
       <Row>
         <Col className="d-flex justify-content-between pt-2">

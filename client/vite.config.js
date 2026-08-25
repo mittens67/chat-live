@@ -1,15 +1,27 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react-swc'
+import tailwindcss from '@tailwindcss/vite'
 import { fileURLToPath, URL } from 'node:url'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   resolve: {
     // Mirrors the "paths" entry in tsconfig.json - both must agree or an
     // import resolves for the type-checker but not the bundler
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
+  },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        // Bootstrap's own SCSS emits ~25 mixed-decls deprecation warnings on
+        // every build. They are not actionable from here - they come from
+        // node_modules - and they bury any warning our own styles produce.
+        // quietDeps silences dependencies only; our SCSS still reports.
+        quietDeps: true,
+      },
     },
   },
   server: {

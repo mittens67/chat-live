@@ -3,7 +3,6 @@ import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import Image from "react-bootstrap/Image";
 import { FaEye } from "react-icons/fa";
-import { ChatState } from "../../context/ChatProvider";
 import ModalTrigger from "./ModalTrigger";
 import { DEFAULT_AVATAR, onAvatarError } from "../../lib/defaultAvatar";
 
@@ -12,8 +11,7 @@ const ProfileModal = ({ user, children }) => {
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
-  const {darkTheme} = ChatState();
-  return (
+    return (
     <>
       {children ? (
         <ModalTrigger onClick={handleShow}>{children}</ModalTrigger>
@@ -27,7 +25,7 @@ const ProfileModal = ({ user, children }) => {
         </Button>
       )}
 
-      <Modal show={show} centered onHide={handleClose} data-bs-theme={darkTheme? 'dark': ''}>
+      <Modal show={show} centered onHide={handleClose}>
         <Modal.Header closeButton className="border-0 text-center">
           <Modal.Title className="w-100 modal-title">{user.name}</Modal.Title>
         </Modal.Header>

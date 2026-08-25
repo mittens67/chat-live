@@ -1,64 +1,36 @@
-/* Login and Register Component Styles*/
-
-// @include themify($themes) {
-//   .auth {
-//     &-btn {
-//       background-color: themed("color-primary");
-//       border: none;
-//       font-weight: bold;
-//       border: 0.1rem solid themed("color-secondary");
-
-//       &:hover {
-//         background-color: themed("color-secondary");
-//         color: themed("color-accent");
-//         border: 0.1rem solid themed("color-primary");
-//       }
-//     }
-
-//     &-form__title {
-//       font-size: 2rem;
-//       font-weight: bold;
-//       color: themed("color-primary");
-//     }
-
-//     &-link {
-//       color: themed("color-primary");
-//       font-weight: bold;
-
-//       &:hover {
-//         color: themed("color-primary");
-//       }
-//     }
-//   }
-// }
-
+/* Login and Register Component Styles */
 
 .auth {
   &-btn {
-    background-color: $color-primary;
-    border: none;
-    font-weight: bold;
-    border: .1rem solid $color-secondary;
+    background-color: var(--c-accent);
+    color: var(--c-on-accent);
+    border: 1px solid var(--c-accent);
+    font-weight: 600;
+    border-radius: var(--radius-sm);
 
-    &:hover {
-      background-color: $color-secondary;
-      color: $color-accent;
-      border: .1rem solid $color-primary;
+    &:hover,
+    &:focus {
+      background-color: var(--c-accent-hover);
+      color: var(--c-on-accent);
+      border-color: var(--c-accent-hover);
     }
   }
 
   &-form__title {
-    font-size: 2rem;
-    font-weight: bold;
-    color: $color-primary;
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    color: var(--c-text);
+    letter-spacing: -0.02em;
   }
 
-  &-link{
-    color: $color-primary;
-    font-weight: bold;
+  &-link {
+    //Was the accent at full strength, which on the dark surface sat at roughly
+    //3:1 - readable as a heading, not as body text
+    color: var(--c-accent-text);
+    font-weight: 600;
 
     &:hover {
-        color: $color-accent;
+      color: var(--c-accent);
     }
   }
 }

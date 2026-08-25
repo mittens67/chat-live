@@ -189,7 +189,7 @@ const SingleChat = ({ setFetchAgain }) => {
   };
 
   return (
-    <div style={{ height: "100%" }}>
+    <div className="singleChat">
       {!selectedChat ? (
         <div className="singleChat-blank">
           <p>Click on a user to start chatting</p>

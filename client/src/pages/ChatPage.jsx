@@ -1,15 +1,10 @@
 import { useState } from "react";
-import { ChatState } from "../context/ChatProvider";
-import Container from "react-bootstrap/Container";
-import Row from "react-bootstrap/Row";
-import Col from "react-bootstrap/Col";
 
 import Header from "../components/ui/Header";
 import ChatList from "../components/Chat/ChatList";
 import ChatWindow from "../components/Chat/ChatWindow";
 
 const ChatPage = () => {
-  const { darkTheme } = ChatState();
   const [fetchAgain, setFetchAgain] = useState(false);
   // for smaller screens, to toggle between the chat list and the window
   const [showChatWindow, setShowChatWindow] = useState(false);
@@ -17,30 +12,31 @@ const ChatPage = () => {
   //RequireAuth guarantees a user here, so the per-child `user &&` guards that
   //used to render an empty shell are gone
   return (
-    <div style={{ width: "100%" }}>
+    /**
+     * One grid owns the vertical space: an auto-sized header row and a content
+     * row that takes the rest. This replaces three hand-maintained offsets
+     * (calc(100dvh - 5rem), - 5.5rem and - 9rem) that each encoded "header
+     * height plus chrome" and silently desynced whenever the header changed.
+     *
+     * min-h-0 on the content row is what lets its children actually scroll:
+     * a grid item's default min-height is auto, which refuses to shrink below
+     * its content.
+     */
+    <div className="grid h-dvh grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-bg">
       <Header />
-      <Container fluid className="mt-1" style={{ height: "calc(100dvh - 5rem)" }}>
-        <Row style={{ height: "100%" }}>
-          <Col xs={12} md={3}>
-            <ChatList
-              fetchAgain={fetchAgain}
-              showChatWindow={showChatWindow}
-              openChatWindow={() => setShowChatWindow(true)}
-            />
-          </Col>
-          <Col
-            xs={12}
-            md={9}
-            style={{ backgroundColor: darkTheme ? "black" : "white" }}
-          >
-            <ChatWindow
-              setFetchAgain={setFetchAgain}
-              showChatWindow={showChatWindow}
-              closeChatWindow={() => setShowChatWindow(false)}
-            />
-          </Col>
-        </Row>
-      </Container>
+
+      <main className="grid min-h-0 md:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)]">
+        <ChatList
+          fetchAgain={fetchAgain}
+          showChatWindow={showChatWindow}
+          openChatWindow={() => setShowChatWindow(true)}
+        />
+        <ChatWindow
+          setFetchAgain={setFetchAgain}
+          showChatWindow={showChatWindow}
+          closeChatWindow={() => setShowChatWindow(false)}
+        />
+      </main>
     </div>
   );
 };

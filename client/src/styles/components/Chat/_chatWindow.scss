@@ -1,44 +1,30 @@
 .chatWindow {
+  //Owns its grid cell; the pane background used to be an inline black/white
+  //style that overrode every stylesheet rule
+  background-color: var(--c-surface);
+  min-height: 0;
+  height: 100%;
+  border-left: 1px solid var(--c-border);
+
   &-btn {
-    //background-color: $color-primary;
-    border: none;
-    font-weight: bold;
-    //border: .1rem solid $color-secondary;
+    border: 1px solid var(--c-border);
+    background-color: var(--c-surface);
+    color: var(--c-text);
+    font-weight: 500;
     height: 2rem;
     display: flex;
     align-items: center;
-    // &:hover {
-    //   background-color: $color-secondary;
-    //   color: $color-accent;
-    //   border: .1rem solid $color-primary;
-    // }
-  }
-}
+    border-radius: var(--radius-sm);
 
-.theme-light {
-  .chatWindow {
-    &-btn {
-      background-color: $color-primary;
-      border: 0.1rem solid $color-secondary;
-      &:hover {
-        background-color: $color-secondary;
-        color: $color-accent;
-        border: 0.1rem solid $color-primary;
-      }
+    &:hover {
+      background-color: var(--c-accent-subtle);
+      color: var(--c-text);
     }
   }
 }
 
-.theme-dark {
+@media (max-width: 767.98px) {
   .chatWindow {
-    &-btn {
-      background-color: $color-secondary;
-      border: 0.1rem solid $color-primary;
-      &:hover {
-        background-color: $color-primary;
-        color: $color-white;
-        border: 0.1rem solid $color-secondary;
-      }
-    }
+    border-left: none;
   }
 }

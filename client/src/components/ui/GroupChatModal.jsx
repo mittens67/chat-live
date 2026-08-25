@@ -21,7 +21,7 @@ const GroupChatModal = ({ children }) => {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [submitting, setSubmitting] = useState(false);
 
-  const { chats, setChats, darkTheme } = ChatState();
+  const { chats, setChats } = ChatState();
   const { query, setQuery, results, loading, reset } = useUserSearch();
 
   const handleClose = () => setShow(false);
@@ -75,7 +75,6 @@ const GroupChatModal = ({ children }) => {
         show={show}
         centered
         onHide={handleClose}
-        data-bs-theme={darkTheme ? "dark" : ""}
       >
         <Modal.Header closeButton className="border-0 text-center">
           <Modal.Title className="w-100 groupModal-title">

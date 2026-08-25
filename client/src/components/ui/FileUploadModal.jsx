@@ -23,7 +23,7 @@ const FileUploadModal = ({ children, title, handler }) => {
   //will no longer guess it from the URL
   const [upload, setUpload] = useState(null);
 
-  const { selectedChat, darkTheme } = ChatState();
+  const { selectedChat } = ChatState();
 
   const handleClose = () => {
     setUpload(null);
@@ -77,7 +77,6 @@ const FileUploadModal = ({ children, title, handler }) => {
         show={show}
         centered
         onHide={handleClose}
-        data-bs-theme={darkTheme ? "dark" : ""}
       >
         <Modal.Header closeButton className="border-0 text-center">
           <Modal.Title className="w-100">{`Upload ${title}`}</Modal.Title>

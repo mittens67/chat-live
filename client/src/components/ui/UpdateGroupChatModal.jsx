@@ -22,7 +22,7 @@ const UpdateGroupChatModal = ({ fetchMessages, setFetchAgain }) => {
   const [loading, setLoading] = useState(false);
   const [renameLoading, setRenameLoading] = useState(false);
 
-  const { selectedChat, setSelectedChat, user, darkTheme } = ChatState();
+  const { selectedChat, setSelectedChat, user } = ChatState();
   const { query, setQuery, results, loading: searching } = useUserSearch();
 
   const handleClose = () => setShow(false);
@@ -123,7 +123,6 @@ const UpdateGroupChatModal = ({ fetchMessages, setFetchAgain }) => {
         show={show}
         centered
         onHide={handleClose}
-        data-bs-theme={darkTheme ? "dark" : ""}
       >
         <Modal.Header closeButton className="border-0 text-center">
           <Modal.Title className="w-100 updateGroup-title">

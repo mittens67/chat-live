@@ -1,127 +1,75 @@
-﻿.chatList {
+.chatList {
   &-container {
-    max-height: calc(100dvh - 5.5rem);
-    overflow-y: hidden;
-    padding: 0 1rem;
-    padding-bottom: 4rem;
-    // -ms-overflow-style: none; /* Internet Explorer 10+ */
-    //   scrollbar-width: none; /* Firefox */
-    //   &::-webkit-scrollbar {
-    //     display: none;  /* Safari and Chrome */
-    // }
+    //Fills its grid cell instead of `max-height: calc(100dvh - 5.5rem)` plus a
+    //4rem bottom padding fudge to keep the last row off the viewport edge
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    height: 100%;
+    min-height: 0;
+    padding: 0.75rem;
+    background-color: var(--c-surface);
   }
 
   &-scrollableRow {
-    height: 100%; // height is necessary for scroll to work
+    min-height: 0;
     // change bootstrap defaults here to space items inside this window properly
     flex-direction: column;
     flex-wrap: nowrap;
 
     overflow-y: auto;
-    -ms-overflow-style: none; /* Internet Explorer 10+ */
-    scrollbar-width: thin; /* Firefox */
-    &::-webkit-scrollbar {
-      display: none; /* Safari and Chrome */
-    }
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--c-border) transparent;
   }
 
   &-title {
-    font-weight: bold;
-    font-size: 1.5rem;
+    font-weight: 600;
+    font-size: var(--text-lg);
+    color: var(--c-text);
   }
 
   &-btn {
-    border: none;
-    font-weight: bold;
+    border: 1px solid var(--c-border);
+    background-color: var(--c-surface);
+    color: var(--c-text);
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+
+    &:hover {
+      background-color: var(--c-accent-subtle);
+      color: var(--c-text);
+      border-color: var(--c-accent);
+    }
   }
+
   &-chat {
     height: 4rem;
-    width: 95%;
-    margin: 0.2rem auto;
-    border-radius: 0.5rem;
+    width: 100%;
+    margin: 0.125rem 0;
+    padding: 0 0.75rem;
+    border: none;
+    border-radius: var(--radius-md);
     cursor: pointer;
-    font-weight: bold;
+    font-weight: 500;
+    text-align: left;
     display: flex;
     align-items: center;
-  }
-}
+    background-color: transparent;
+    color: var(--c-text);
 
-.theme-light {
-  .chatList {
-    &-scrollableRow {
-      scrollbar-color: $color-primary $color-secondary;
-    }
-
-    &-title {
-      color: $color-accent;
-    }
-
-    &-btn {
-      background-color: $color-primary;
-      border: 0.1rem solid $color-secondary;
-
-      &:hover {
-        background-color: $color-secondary;
-        color: $color-accent;
-        border: 0.1rem solid $color-primary;
-      }
-    }
-    &-chat {
-      background-color: $color-tertiary;
-
-      &:hover {
-        background-color: $color-primary;
-        color: $color-white;
-      }
-    }
-
-    &-selected {
-      background-color: $color-secondary;
-
-      &:hover {
-        background-color: $color-secondary;
-      }
+    &:hover {
+      background-color: var(--c-raised);
     }
   }
-}
 
-.theme-dark {
-  .chatList {
-    &-scrollableRow {
-      scrollbar-color: $color-primary $color-secondary;
-    }
+  //The selected row reads as selected in both themes now; it used to be a
+  //pale olive that vanished against the dark palette
+  &-selected {
+    background-color: var(--c-accent-subtle);
+    box-shadow: inset 3px 0 0 var(--c-accent);
 
-    &-title {
-      color: $color-tertiary;
-    }
-
-    &-btn {
-      background-color: $color-secondary;
-      border: 0.1rem solid $color-primary;
-      color: $color-accent;
-
-      &:hover {
-        background-color: $color-primary;
-        color: $color-white;
-        border: 0.1rem solid $color-secondary;
-      }
-    }
-    &-chat {
-      background-color: $color-accent;
-      color: $color-white;
-
-      &:hover {
-        background-color: $color-secondary;
-        color: $color-black;
-      }
-    }
-
-    &-selected {
-      background-color: $color-primary;
-
-      &:hover {
-        background-color: $color-primary;
-      }
+    &:hover {
+      background-color: var(--c-accent-subtle);
     }
   }
 }

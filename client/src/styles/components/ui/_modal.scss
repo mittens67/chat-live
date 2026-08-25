@@ -1,27 +1,100 @@
+/**
+ * Bootstrap's own modal and offcanvas chrome, themed from the tokens.
+ *
+ * This replaces the `data-bs-theme={darkTheme ? "dark" : ""}` prop that was
+ * passed to five separate components. That switched Bootstrap into its own
+ * grey dark palette, which had nothing to do with the app's colours - so dark
+ * mode showed Bootstrap grey chrome behind sage-green titles.
+ */
+.modal-content,
+.offcanvas {
+  background-color: var(--c-surface);
+  color: var(--c-text);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-lg);
+}
+
+.modal-header,
+.offcanvas-header {
+  border-bottom-color: var(--c-border);
+}
+
+.modal-footer {
+  border-top-color: var(--c-border);
+}
+
+//Bootstrap renders the close button as a background image, and its only
+//dark-mode affordance is a filter
+[data-theme="dark"] .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/**
+ * Bootstrap form controls, themed globally.
+ *
+ * Deliberately NOT scoped to modals: the auth screens live outside both the
+ * modal and the offcanvas, so scoping this left every login and register input
+ * rendering white-on-white in dark mode.
+ */
+.form-control,
+.form-select {
+  background-color: var(--c-bg);
+  border-color: var(--c-border);
+  color: var(--c-text);
+
+  &::placeholder {
+    color: var(--c-muted);
+  }
+
+  &:focus {
+    background-color: var(--c-bg);
+    color: var(--c-text);
+    border-color: var(--c-accent);
+    //Bootstrap's default focus glow is its own blue; the ring comes from
+    //the global :focus-visible rule instead
+    box-shadow: none;
+  }
+}
+
+//FloatingLabel renders its label over the input
+.form-floating > label {
+  color: var(--c-muted);
+}
+
+//The label keeps its own background while floating, which would otherwise be
+//a white chip sitting on a dark input
+.form-floating > .form-control:focus ~ label::after,
+.form-floating > .form-control:not(:placeholder-shown) ~ label::after {
+  background-color: transparent;
+}
+
 .modal {
-    color: $color-accent;
-    &-btn {
-        background-color: $color-primary;
-        border: none;
-        font-weight: bold;
-        border: .1rem solid $color-secondary;
-        height: 2rem;
-        display: flex;
-        align-items: center;
-        &:hover {
-          background-color: $color-secondary;
-          color: $color-accent;
-          border: .1rem solid $color-primary;
-        }
-    }
+  color: var(--c-text);
 
-    &-title {
-      color: $color-primary;
-      font-weight: bold;
-    }
+  &-btn {
+    background-color: var(--c-accent);
+    color: var(--c-on-accent);
+    border: 1px solid var(--c-accent);
+    font-weight: 500;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    border-radius: var(--radius-sm);
 
-    &-label {
-      color: $color-primary;
-      font-weight: bold;
+    &:hover {
+      background-color: var(--c-accent-hover);
+      color: var(--c-on-accent);
+      border-color: var(--c-accent-hover);
     }
+  }
+
+  &-title {
+    color: var(--c-text);
+    font-weight: 600;
+  }
+
+  &-label {
+    color: var(--c-muted);
+    font-weight: 500;
+  }
 }
