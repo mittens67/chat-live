@@ -166,6 +166,34 @@ export const previewMessage = (message) => {
   return message.content;
 };
 
+const MAX_LARGE_EMOJI = 6;
+//Intl.Segmenter clusters a ZWJ sequence (👨‍👩‍👧‍👦) or a skin-tone-modified
+//emoji into one grapheme already, so testing that each grapheme *starts with*
+//a pictographic or regional-indicator (flag) character is enough - no need to
+//hand-roll a ZWJ/variation-selector-aware regex.
+const EMOJI_GRAPHEME_START = /^(\p{Extended_Pictographic}|\p{Regional_Indicator})/u;
+const segmenter =
+  typeof Intl !== "undefined" && Intl.Segmenter
+    ? new Intl.Segmenter(undefined, { granularity: "grapheme" })
+    : null;
+
+/**
+ * Whether a text message is nothing but a handful of emoji, the common chat-
+ * app convention for rendering them large with no bubble. Capped at
+ * MAX_LARGE_EMOJI so a wall of pasted emoji does not blow up the layout.
+ */
+export const isEmojiOnlyMessage = (content) => {
+  if (typeof content !== "string" || !segmenter) return false;
+
+  const trimmed = content.trim();
+  if (!trimmed) return false;
+
+  const graphemes = [...segmenter.segment(trimmed)].map((s) => s.segment);
+  if (graphemes.length > MAX_LARGE_EMOJI) return false;
+
+  return graphemes.every((g) => EMOJI_GRAPHEME_START.test(g));
+};
+
 const SIZE_UNITS = ["B", "KB", "MB", "GB"];
 
 /** e.g. 2_500_000 -> "2.4 MB", for the file-attachment card. */

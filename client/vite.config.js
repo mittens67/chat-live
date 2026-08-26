@@ -51,6 +51,10 @@ export default defineConfig({
         manualChunks: {
           react: ['react', 'react-dom', 'react-router-dom'],
           socket: ['socket.io-client'],
+          // ~1MB emoji dataset; also lazy-loaded (see EmojiPickerButton.jsx) so
+          // it is fetched only when the composer's emoji button is opened, not
+          // on every app load
+          emoji: ['emoji-picker-react'],
         },
       },
     },

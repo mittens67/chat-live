@@ -5,6 +5,8 @@ import {
   isFirstInGroup,
   isLastInGroup,
   formatMessageTime,
+  inferMessageType,
+  isEmojiOnlyMessage,
 } from "../../config/chatLogic";
 import RenderMessage from "./RenderMessage";
 import { DEFAULT_AVATAR, onAvatarError } from "../../lib/defaultAvatar";
@@ -21,6 +23,10 @@ const ScrollableChat = ({ messages, isGroupChat }) => {
           const isOwn = m.sender._id === user._id;
           const first = isFirstInGroup(messages, i);
           const last = isLastInGroup(messages, i);
+          //Rendered large with no bubble, the common chat-app convention -
+          //only for plain text, never for an image/video/file URL
+          const emojiOnly =
+            inferMessageType(m) === "text" && isEmojiOnlyMessage(m.content);
 
           return (
             <div
@@ -53,11 +59,15 @@ const ScrollableChat = ({ messages, isGroupChat }) => {
                 )}
 
                 <div
-                  className={`rounded-xl px-3 py-1.5 ${
-                    isOwn
-                      ? `bg-sent text-sent-text ${last ? "rounded-br-sm" : ""}`
-                      : `bg-received text-received-text ${last ? "rounded-bl-sm" : ""}`
-                  }`}
+                  className={
+                    emojiOnly
+                      ? "text-4xl leading-none"
+                      : `rounded-xl px-3 py-1.5 ${
+                          isOwn
+                            ? `bg-sent text-sent-text ${last ? "rounded-br-sm" : ""}`
+                            : `bg-received text-received-text ${last ? "rounded-bl-sm" : ""}`
+                        }`
+                  }
                 >
                   <RenderMessage message={m} />
                 </div>

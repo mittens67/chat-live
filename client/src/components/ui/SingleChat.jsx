@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import { Paperclip, Send, ArrowLeft, MessagesSquare } from "lucide-react";
 
 import ProfileModal from "./ProfileModal";
+import EmojiPickerButton from "./EmojiPickerButton";
 import {
   getSender,
   getSenderFull,
@@ -282,6 +283,10 @@ const SingleChat = ({ setFetchAgain, onBack }) => {
                 className="composer-input"
               />
 
+              <EmojiPickerButton
+                onSelect={(emoji) => setNewMessage((prev) => prev + emoji)}
+              />
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
@@ -298,6 +303,9 @@ const SingleChat = ({ setFetchAgain, onBack }) => {
                   </DropdownMenuItem>
                   <DropdownMenuItem onSelect={() => setUploadKind("image")}>
                     Upload Image
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setUploadKind("video")}>
+                    Upload Video
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
