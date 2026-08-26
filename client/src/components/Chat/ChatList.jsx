@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Plus, AlertTriangle, MessageSquarePlus } from "lucide-react";
+import toast from "react-hot-toast";
 import { ChatState } from "../../context/ChatProvider";
+import { useSocket } from "../../context/SocketProvider";
 
 import Loading from "../ui/Loading";
 import GroupChatModal from "../ui/GroupChatModal";
@@ -14,12 +16,13 @@ import {
 import api, { errorMessage } from "../../lib/api";
 import { DEFAULT_AVATAR, GROUP_AVATAR, onAvatarError } from "../../lib/defaultAvatar";
 
-const ChatList = ({ fetchAgain, showChatWindow, openChatWindow }) => {
+const ChatList = ({ fetchAgain, showChatWindow }) => {
   const [error, setError] = useState(null);
   //user comes from context now; this component used to keep a second copy read
   //straight from localStorage, which went stale on logout
   const { openChat, chats, setChats, user, selectedChat, notification } =
     ChatState();
+  const { socket } = useSocket();
 
   const fetchChats = useCallback(async () => {
     try {
@@ -37,6 +40,28 @@ const ChatList = ({ fetchAgain, showChatWindow, openChatWindow }) => {
   useEffect(() => {
     fetchChats();
   }, [fetchChats, fetchAgain]);
+
+  //Someone just added this user to a chat (a new group, or an existing one).
+  //Without this, nothing ever told the client - the chat list only refetches
+  //via `fetchAgain`, which only flips when a *message* arrives - so being
+  //added to a group looked like nothing had happened until someone spoke.
+  useEffect(() => {
+    if (!socket) return undefined;
+
+    const handleAddedToChat = (chat) => {
+      setChats((prev) => {
+        const existing = prev ?? [];
+        //A groupadd and the initial GET /chat can race; don't duplicate the row
+        return existing.some((c) => c._id === chat._id)
+          ? existing
+          : [chat, ...existing];
+      });
+      toast.success(`You were added to ${chat.chatName}`);
+    };
+
+    socket.on("added to chat", handleAddedToChat);
+    return () => socket.off("added to chat", handleAddedToChat);
+  }, [socket, setChats]);
 
   const renderChats = () => {
     if (error) {
@@ -86,10 +111,7 @@ const ChatList = ({ fetchAgain, showChatWindow, openChatWindow }) => {
                   ? "chatList-chat chatList-selected"
                   : "chatList-chat"
               }
-              onClick={() => {
-                openChat(chat);
-                openChatWindow();
-              }}
+              onClick={() => openChat(chat)}
               key={chat._id}
             >
               <img

@@ -47,6 +47,7 @@
 
   &:hover:not([data-active]) {
     color: var(--c-text);
+    background-color: color-mix(in srgb, var(--c-surface) 60%, transparent);
   }
 
   &[data-active] {

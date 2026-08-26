@@ -40,4 +40,23 @@ const broadcastMessage = (io, chat, message, senderId) => {
   });
 };
 
-module.exports = { broadcastMessage };
+/**
+ * Notify a single user directly - e.g. someone just added them to a group.
+ *
+ * Without this, a newly added member had no way to learn a chat existed
+ * until *something else* happened to trigger their client to refetch its
+ * chat list, which in practice meant "until the first message arrived" -
+ * the chat list only ever refetches on `message recieved`, so being added
+ * to a group looked like nothing happened at all until someone spoke in it.
+ *
+ * @param {import("socket.io").Server|undefined} io
+ * @param {*} userId
+ * @param {string} event
+ * @param {object} payload
+ */
+const notifyUser = (io, userId, event, payload) => {
+  if (!io || !userId) return;
+  io.to(userId.toString()).emit(event, payload);
+};
+
+module.exports = { broadcastMessage, notifyUser };

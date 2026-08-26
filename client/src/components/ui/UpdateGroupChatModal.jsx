@@ -127,7 +127,7 @@ const UpdateGroupChatModal = ({ fetchMessages, setFetchAgain }) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button type="button" className="modal-btn" aria-label="Edit group">
+        <button type="button" className="icon-btn" aria-label="Edit group">
           <Pencil size={16} aria-hidden="true" />
         </button>
       </DialogTrigger>

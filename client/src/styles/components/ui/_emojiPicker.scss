@@ -1,0 +1,43 @@
+/**
+ * emoji-picker-react ships its own default blue/grey theme via CSS custom
+ * properties on its root .EmojiPickerReact element (see the package's
+ * baseVariables/DarkTheme objects) - out of the box it looks bolted-on next
+ * to the app's mauve palette. It reads these itself, so overriding the same
+ * variable names here re-themes it without touching the library's internals.
+ *
+ * !important is required: the library sets both the light (--epr-*) and the
+ * dark (--epr-dark-*) variants as inline custom properties on the root node,
+ * and only an !important author rule outranks a non-important inline style.
+ *
+ * Its own border/radius are switched off (skin-tone picker is already
+ * disabled via the `skinTonesDisabled` prop) so the single frame comes from
+ * the Popover primitive wrapping it, rather than two nested rounded borders.
+ */
+.EmojiPickerReact {
+  --epr-bg-color: var(--c-surface) !important;
+  --epr-dark-bg-color: var(--c-surface) !important;
+  --epr-text-color: var(--c-text) !important;
+  --epr-dark-text-color: var(--c-text) !important;
+
+  --epr-picker-border-color: transparent !important;
+  --epr-dark-picker-border-color: transparent !important;
+  --epr-picker-border-radius: 0 !important;
+
+  --epr-category-label-bg-color: var(--c-surface) !important;
+  --epr-dark-category-label-bg-color: var(--c-surface) !important;
+
+  --epr-search-input-bg-color: var(--c-bg) !important;
+  --epr-dark-search-input-bg-color: var(--c-bg) !important;
+
+  --epr-highlight-color: var(--c-accent) !important;
+  --epr-dark-highlight-color: var(--c-accent) !important;
+
+  --epr-category-icon-active-color: var(--c-accent) !important;
+  --epr-dark-category-icon-active-color: var(--c-accent) !important;
+
+  --epr-hover-bg-color: var(--c-accent-subtle) !important;
+  --epr-dark-hover-bg-color: var(--c-accent-subtle) !important;
+
+  --epr-focus-bg-color: var(--c-accent-subtle) !important;
+  --epr-dark-focus-bg-color: var(--c-accent-subtle) !important;
+}

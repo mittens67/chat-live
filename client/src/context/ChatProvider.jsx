@@ -22,6 +22,13 @@ const ChatProvider = ({ children }) => {
   //`user === undefined` on mount, which is what left ChatList spinning forever.
   const [user, setUser] = useState(() => readJSON(STORAGE_KEY));
   const [selectedChat, setSelectedChat] = useState();
+  //Mobile only: which pane (list vs. conversation) is showing. Lives here,
+  //not as local state in ChatPage, so every way of opening a chat - a list
+  //row, a search result, a bell notification, creating a group - flips it
+  //the same way. It used to be ChatList-only local plumbing, which is why
+  //opening a chat via search left the list showing on a narrow viewport with
+  //no way to reach the conversation that had, in fact, opened underneath it.
+  const [showChatWindow, setShowChatWindow] = useState(false);
   const [chats, setChats] = useState(null);
   const [notification, setNotification] = useState([]);
   const [darkTheme, setDarkTheme] = useState(() => {
@@ -63,7 +70,10 @@ const ChatProvider = ({ children }) => {
   const openChat = (chat) => {
     setSelectedChat(chat);
     setNotification((prev) => prev.filter((n) => n.chat._id !== chat._id));
+    setShowChatWindow(true);
   };
+
+  const closeChatWindow = () => setShowChatWindow(false);
 
   //Memoised: without this the value object is a new reference on every render,
   //so every consumer re-renders on any state change anywhere
@@ -76,6 +86,8 @@ const ChatProvider = ({ children }) => {
       selectedChat,
       setSelectedChat,
       openChat,
+      showChatWindow,
+      closeChatWindow,
       chats,
       setChats,
       notification,
@@ -83,7 +95,7 @@ const ChatProvider = ({ children }) => {
       darkTheme,
       setDarkTheme,
     }),
-    [user, selectedChat, chats, notification, darkTheme]
+    [user, selectedChat, showChatWindow, chats, notification, darkTheme]
   );
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

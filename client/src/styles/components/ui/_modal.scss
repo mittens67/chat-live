@@ -48,3 +48,35 @@
     }
   }
 }
+
+/**
+ * A single icon, nothing else - the profile "eye" trigger, the group-edit
+ * pencil. `.modal-btn` used to double as this (a solid accent block sized by
+ * its `0 1rem` text padding), which is the right shape for "Create"/"Update"
+ * but reads as an oversized, oddly-proportioned rectangle around one 16px
+ * glyph. This is the same circular chip shape as the header's icon buttons,
+ * not a text-button variant, so it lives on its own rather than as a
+ * `.modal-btn--*` modifier.
+ */
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  height: 2.25rem;
+  width: 2.25rem;
+  border: none;
+  border-radius: 999px;
+  background-color: var(--c-raised);
+  color: var(--c-text);
+  transition: background-color 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background-color: var(--c-accent-subtle);
+    color: var(--c-accent);
+  }
+
+  &:active {
+    background-color: var(--c-border);
+  }
+}

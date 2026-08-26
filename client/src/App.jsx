@@ -5,6 +5,7 @@ import {
   Route,
   Link,
 } from "react-router-dom";
+import { Compass } from "lucide-react";
 
 import Loading from "./components/ui/Loading";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -18,6 +19,7 @@ const ChatPage = lazy(() => import("./pages/ChatPage"));
 
 const NotFound = () => (
   <div className="flex min-h-dvh flex-col items-center justify-center gap-3 p-6 text-center">
+    <Compass size={40} aria-hidden="true" className="text-border" />
     <p className="text-3xl font-semibold text-accent">404</p>
     <h1 className="text-xl font-semibold">That page does not exist.</h1>
     <p className="text-subtle">

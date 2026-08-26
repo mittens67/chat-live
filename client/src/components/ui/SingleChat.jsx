@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { Paperclip, Send, ArrowLeft, MessagesSquare } from "lucide-react";
+import {
+  Paperclip,
+  Send,
+  ArrowLeft,
+  MessagesSquare,
+  FileText,
+  Image as ImageIcon,
+  Video,
+} from "lucide-react";
 
 import ProfileModal from "./ProfileModal";
 import EmojiPickerButton from "./EmojiPickerButton";
@@ -298,13 +306,25 @@ const SingleChat = ({ setFetchAgain, onBack }) => {
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  <DropdownMenuItem onSelect={() => setUploadKind("file")}>
+                  <DropdownMenuItem
+                    onSelect={() => setUploadKind("file")}
+                    className="flex items-center gap-2"
+                  >
+                    <FileText size={15} aria-hidden="true" className="shrink-0 text-subtle" />
                     Upload File
                   </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => setUploadKind("image")}>
+                  <DropdownMenuItem
+                    onSelect={() => setUploadKind("image")}
+                    className="flex items-center gap-2"
+                  >
+                    <ImageIcon size={15} aria-hidden="true" className="shrink-0 text-subtle" />
                     Upload Image
                   </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => setUploadKind("video")}>
+                  <DropdownMenuItem
+                    onSelect={() => setUploadKind("video")}
+                    className="flex items-center gap-2"
+                  >
+                    <Video size={15} aria-hidden="true" className="shrink-0 text-subtle" />
                     Upload Video
                   </DropdownMenuItem>
                 </DropdownMenuContent>

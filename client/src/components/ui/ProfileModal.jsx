@@ -28,7 +28,7 @@ const ProfileModal = ({ user, open, onOpenChange }) => {
         <DialogTrigger asChild>
           <button
             type="button"
-            className="modal-btn"
+            className="icon-btn"
             aria-label={`View ${user.name}'s profile`}
           >
             <Eye size={16} aria-hidden="true" />

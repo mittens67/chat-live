@@ -19,6 +19,10 @@
   },
   "author": "Mitha B",
   "license": "MIT",
+  "nodemonConfig": {
+    "watch": ["server"],
+    "ext": "js,mjs,cjs,json"
+  },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",

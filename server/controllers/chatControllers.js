@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const Chat = require("../models/chatModel");
 const User = require("../models/userModel");
 const { loadChatAsMember, loadGroupAsAdmin } = require("../middleware/chatAccess");
+const { notifyUser } = require("../lib/broadcast");
 
 const USER_FIELDS = "name picture email";
 
@@ -133,6 +134,14 @@ const createGroupChat = asyncHandler(async (req, res) => {
     .populate("users", USER_FIELDS)
     .populate("groupAdmin", USER_FIELDS);
 
+  //Same reasoning as addToGroup: every other member just got added to a
+  //chat they don't yet know exists, and nothing else will tell them until
+  //someone happens to send the first message
+  const io = req.app.get("io");
+  memberIds
+    .filter((id) => id !== req.user._id.toString())
+    .forEach((id) => notifyUser(io, id, "added to chat", fullGroupChat));
+
   res.status(201).json(fullGroupChat);
 });
 
@@ -223,6 +232,10 @@ const addToGroup = asyncHandler(async (req, res) => {
   )
     .populate("users", USER_FIELDS)
     .populate("groupAdmin", USER_FIELDS);
+
+  //So the new member's chat list picks this up immediately, rather than
+  //only once someone happens to send the group's first message
+  notifyUser(req.app.get("io"), userId, "added to chat", added);
 
   res.json(added);
 });

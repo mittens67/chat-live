@@ -1,6 +1,15 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Bell, MessageCircle } from "lucide-react";
+import {
+  Search,
+  Bell,
+  MessageCircle,
+  MessageSquare,
+  CircleUser,
+  Sun,
+  Moon,
+  LogOut,
+} from "lucide-react";
 
 import { ChatState } from "../../context/ChatProvider";
 import ProfileModal from "./ProfileModal";
@@ -73,10 +82,14 @@ const Header = () => {
                 //not just the one that was clicked - previously reading a
                 //chat with several unread messages only dismissed one
                 onSelect={() => openChat(n.chat)}
+                className="flex items-center gap-2"
               >
-                {n.chat.isGroupChat
-                  ? `New message in ${n.chat.chatName}`
-                  : `New message from ${getSender(user, n.chat.users)}`}
+                <MessageSquare size={15} aria-hidden="true" className="shrink-0 text-subtle" />
+                <span className="truncate">
+                  {n.chat.isGroupChat
+                    ? `New message in ${n.chat.chatName}`
+                    : `New message from ${getSender(user, n.chat.users)}`}
+                </span>
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
@@ -103,15 +116,28 @@ const Header = () => {
                 dropdown, and nesting a Dialog trigger there is the one Radix
                 combination that reliably fights over focus. Driving `open`
                 directly sidesteps it entirely. */}
-            <DropdownMenuItem onSelect={() => setProfileOpen(true)}>
+            <DropdownMenuItem
+              onSelect={() => setProfileOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <CircleUser size={15} aria-hidden="true" className="shrink-0 text-subtle" />
               My Profile
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => setDarkTheme(!darkTheme)}>
-              Switch Theme
+            <DropdownMenuItem
+              onSelect={() => setDarkTheme(!darkTheme)}
+              className="flex items-center gap-2"
+            >
+              {darkTheme ? (
+                <Sun size={15} aria-hidden="true" className="shrink-0 text-subtle" />
+              ) : (
+                <Moon size={15} aria-hidden="true" className="shrink-0 text-subtle" />
+              )}
+              {darkTheme ? "Switch to Light Mode" : "Switch to Dark Mode"}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={logoutHandler}>
+            <DropdownMenuItem onSelect={logoutHandler} className="flex items-center gap-2">
+              <LogOut size={15} aria-hidden="true" className="shrink-0 text-subtle" />
               Log Out
             </DropdownMenuItem>
           </DropdownMenuContent>
