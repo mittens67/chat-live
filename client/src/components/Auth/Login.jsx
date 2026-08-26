@@ -2,10 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
-import Form from "react-bootstrap/Form";
-import Button from "react-bootstrap/Button";
-import FloatingLabel from "react-bootstrap/FloatingLabel";
-
 import { ChatState } from "../../context/ChatProvider";
 import api, { errorMessage } from "../../lib/api";
 
@@ -41,40 +37,46 @@ const Login = ({ toggleLogin }) => {
   };
 
   return (
-    <Form className="d-grid gap-2" onSubmit={handleSubmit}>
-      <h1 className="auth-form__title">Login</h1>
-
-      <FloatingLabel controlId="email" label="Email Address*" className="mb-3">
-        <Form.Control
+    <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+      <label className="field">
+        <span className="field-label">Email Address</span>
+        <input
+          id="email"
           required
           type="email"
           autoComplete="username"
           placeholder="Enter your email address"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          className="field-input"
         />
-      </FloatingLabel>
-      <FloatingLabel controlId="password" label="Password*" className="mb-3">
-        <Form.Control
+      </label>
+
+      <label className="field">
+        <span className="field-label">Password</span>
+        <input
+          id="password"
           required
           type="password"
           autoComplete="current-password"
           placeholder="Enter your password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          className="field-input"
         />
-      </FloatingLabel>
+      </label>
 
-      <Button className="auth-btn" type="submit" disabled={loading}>
+      <button className="auth-btn" type="submit" disabled={loading}>
         {loading ? "Logging in…" : "Login"}
-      </Button>
-      <p style={{ textAlign: "center" }} className="mt-4">
-        ( Don&apos;t have an account yet? )
+      </button>
+
+      <p className="mt-2 text-center text-sm text-subtle">
+        Don&apos;t have an account yet?{" "}
+        <button type="button" className="auth-link" onClick={toggleLogin}>
+          Create an Account
+        </button>
       </p>
-      <Button className="auth-link" variant="link" onClick={toggleLogin}>
-        Create an Account
-      </Button>
-    </Form>
+    </form>
   );
 };
 

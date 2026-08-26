@@ -1,14 +1,11 @@
 /**
  * Design tokens and Tailwind utilities.
- *
- * Preflight is deliberately NOT imported yet. Bootstrap's reboot is still in
- * play until the component migration finishes, and two competing resets would
- * fight over every element. Enable it (add preflight.css below) in the same
- * change that removes Bootstrap.
  */
 @layer theme, base, components, utilities;
 
 @import "tailwindcss/theme.css" layer(theme);
+/* Bootstrap is gone, so its reboot no longer competes with this */
+@import "tailwindcss/preflight.css" layer(base);
 @import "tailwindcss/utilities.css" layer(utilities);
 
 /*
@@ -112,7 +109,16 @@
   --color-raised: var(--c-raised);
   --color-border: var(--c-border);
   --color-text: var(--c-text);
-  --color-muted: var(--c-muted);
+  /*
+   * Exposed as "subtle", not "muted": Bootstrap ships its own `.text-muted`
+   * with `!important`, which silently wins over anything Tailwind generates
+   * under that same name regardless of source order. It happened - this
+   * class rendered using Bootstrap's static light-mode grey in both themes,
+   * nearly invisible on a dark surface, until this rename. The underlying
+   * --c-muted custom property is untouched; only the class-generating theme
+   * key changed, since that is the only part Bootstrap can collide with.
+   */
+  --color-subtle: var(--c-muted);
 
   --color-accent: var(--c-accent);
   --color-accent-hover: var(--c-accent-hover);
@@ -125,8 +131,11 @@
   --color-received: var(--c-received-bg);
   --color-received-text: var(--c-received-text);
 
-  --color-danger: var(--c-danger);
-  --color-on-danger: var(--c-on-danger);
+  /* Same reasoning as "subtle" above - Bootstrap owns .text-danger/.bg-danger
+     with !important too. Not yet used anywhere, so renamed pre-emptively
+     rather than waiting to hit the same bug again. */
+  --color-error: var(--c-danger);
+  --color-on-error: var(--c-on-danger);
   --color-online: var(--c-online);
   --color-ring: var(--c-ring);
 

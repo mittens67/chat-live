@@ -2,9 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
-import Form from "react-bootstrap/Form";
-import Button from "react-bootstrap/Button";
-import FloatingLabel from "react-bootstrap/FloatingLabel";
 import { ChatState } from "../../context/ChatProvider";
 import { uploadToCloudinary } from "../../lib/cloudinary";
 import api, { errorMessage } from "../../lib/api";
@@ -71,30 +68,39 @@ const Register = ({ toggleLogin }) => {
   };
 
   return (
-    <Form className="d-grid gap-2" onSubmit={handleSubmit}>
-      <h1 className="auth-form__title">Register</h1>
-      <FloatingLabel controlId="username" label="Username*" className="mb-3">
-        <Form.Control
+    <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+      <label className="field">
+        <span className="field-label">Username</span>
+        <input
+          id="username"
           required
           type="text"
           autoComplete="username"
           placeholder="Enter your username"
           value={userName}
           onChange={(e) => setUserName(e.target.value)}
+          className="field-input"
         />
-      </FloatingLabel>
-      <FloatingLabel controlId="email" label="Email Address*" className="mb-3">
-        <Form.Control
+      </label>
+
+      <label className="field">
+        <span className="field-label">Email Address</span>
+        <input
+          id="email"
           required
           type="email"
           autoComplete="email"
           placeholder="Enter your email address"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          className="field-input"
         />
-      </FloatingLabel>
-      <FloatingLabel controlId="password" label="Password*" className="mb-3">
-        <Form.Control
+      </label>
+
+      <label className="field">
+        <span className="field-label">Password</span>
+        <input
+          id="password"
           required
           type="password"
           autoComplete="new-password"
@@ -102,43 +108,45 @@ const Register = ({ toggleLogin }) => {
           placeholder="At least 8 characters"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          className="field-input"
         />
-      </FloatingLabel>
-      <FloatingLabel
-        controlId="confirmPassword"
-        label="Confirm Password*"
-        className="mb-3"
-      >
-        <Form.Control
+      </label>
+
+      <label className="field">
+        <span className="field-label">Confirm Password</span>
+        <input
+          id="confirmPassword"
           required
           type="password"
           autoComplete="new-password"
           placeholder="Confirm your password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
+          className="field-input"
         />
-      </FloatingLabel>
-      <FloatingLabel
-        controlId="picture"
-        label="Profile Picture"
-        className="mb-3"
-      >
-        <Form.Control
+      </label>
+
+      <label className="field">
+        <span className="field-label">Profile Picture (optional)</span>
+        <input
           type="file"
-          //image/* - "image/" is not a valid filter, so the picker never filtered
           accept="image/*"
           onChange={(e) => postDetails(e.target.files[0])}
+          className="field-input"
         />
-      </FloatingLabel>
+      </label>
 
-      <Button className="auth-btn" type="submit" disabled={loading}>
+      <button className="auth-btn" type="submit" disabled={loading}>
         {loading ? "Creating account…" : "Create Account"}
-      </Button>
-      <p style={{ textAlign: "center" }}>( Already have an account? )</p>
-      <Button className="auth-link" variant="link" onClick={toggleLogin}>
-        Login Here
-      </Button>
-    </Form>
+      </button>
+
+      <p className="mt-2 text-center text-sm text-subtle">
+        Already have an account?{" "}
+        <button type="button" className="auth-link" onClick={toggleLogin}>
+          Login Here
+        </button>
+      </p>
+    </form>
   );
 };
 

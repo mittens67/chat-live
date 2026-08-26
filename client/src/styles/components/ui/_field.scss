@@ -1,0 +1,42 @@
+/**
+ * A plain labeled input, replacing Bootstrap's FloatingLabel/Form.Control
+ * pair everywhere a form needs one - group chat creation, group rename/add,
+ * and both auth screens.
+ */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  width: 100%;
+}
+
+.field-label {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--c-muted);
+}
+
+.field-input {
+  width: 100%;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--c-bg);
+  color: var(--c-text);
+  padding: 0.5rem 0.75rem;
+  font-size: var(--text-base);
+  font-family: inherit;
+  transition: border-color 0.1s ease;
+
+  &::placeholder {
+    color: var(--c-muted);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--c-accent);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+  }
+}

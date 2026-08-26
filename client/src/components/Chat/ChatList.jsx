@@ -1,23 +1,24 @@
 import { useCallback, useEffect, useState } from "react";
+import { Plus } from "lucide-react";
 import { ChatState } from "../../context/ChatProvider";
-
-import Container from "react-bootstrap/Container";
-import Row from "react-bootstrap/Row";
-import Col from "react-bootstrap/Col";
-import Button from "react-bootstrap/Button";
 
 import Loading from "../ui/Loading";
 import GroupChatModal from "../ui/GroupChatModal";
 
-import { getSender } from "../../config/chatLogic";
-import { FaPlus } from "react-icons/fa";
+import {
+  getSender,
+  getSenderFull,
+  previewMessage,
+  formatChatListTimestamp,
+} from "../../config/chatLogic";
 import api, { errorMessage } from "../../lib/api";
+import { DEFAULT_AVATAR, GROUP_AVATAR, onAvatarError } from "../../lib/defaultAvatar";
 
 const ChatList = ({ fetchAgain, showChatWindow, openChatWindow }) => {
   const [error, setError] = useState(null);
   //user comes from context now; this component used to keep a second copy read
   //straight from localStorage, which went stale on logout
-  const { setSelectedChat, chats, setChats, user, selectedChat } =
+  const { openChat, chats, setChats, user, selectedChat, notification } =
     ChatState();
 
   const fetchChats = useCallback(async () => {
@@ -42,9 +43,9 @@ const ChatList = ({ fetchAgain, showChatWindow, openChatWindow }) => {
       return (
         <div className="chatList-empty">
           <p>{error}</p>
-          <Button size="sm" onClick={fetchChats}>
+          <button type="button" className="chatList-btn" onClick={fetchChats}>
             Retry
-          </Button>
+          </button>
         </div>
       );
     }
@@ -60,57 +61,98 @@ const ChatList = ({ fetchAgain, showChatWindow, openChatWindow }) => {
     }
 
     return (
-      <Row className="chatList-scrollableRow">
-        {chats.map((chat) => (
-          <Col
-            xs={12}
-            as="button"
-            type="button"
-            className={
-              //Compare ids, not references: after a refetch every chat object
-              //is new, so reference equality silently dropped the highlight
-              selectedChat?._id === chat._id
-                ? "chatList-chat chatList-selected"
-                : "chatList-chat"
-            }
-            onClick={() => {
-              setSelectedChat(chat);
-              openChatWindow();
-            }}
-            key={chat._id}
-          >
-            {!chat.isGroupChat ? getSender(user, chat.users) : chat.chatName}
-          </Col>
-        ))}
-      </Row>
+      <div className="chatList-scrollableRow">
+        {chats.map((chat) => {
+          const avatar = chat.isGroupChat
+            ? GROUP_AVATAR
+            : getSenderFull(user, chat.users)?.picture || DEFAULT_AVATAR;
+          const name = chat.isGroupChat
+            ? chat.chatName
+            : getSender(user, chat.users);
+          const hasUnread = notification.some((n) => n.chat._id === chat._id);
+          const timestamp = chat.latestMessage
+            ? formatChatListTimestamp(chat.latestMessage.createdAt)
+            : null;
+
+          return (
+            <button
+              type="button"
+              className={
+                //Compare ids, not references: after a refetch every chat
+                //object is new, so reference equality silently dropped it
+                selectedChat?._id === chat._id
+                  ? "chatList-chat chatList-selected"
+                  : "chatList-chat"
+              }
+              onClick={() => {
+                openChat(chat);
+                openChatWindow();
+              }}
+              key={chat._id}
+            >
+              <img
+                src={avatar}
+                onError={onAvatarError}
+                alt=""
+                className="chatList-avatar"
+              />
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="truncate font-medium">{name}</span>
+                  {timestamp && (
+                    <span className="shrink-0 text-xs text-subtle">
+                      {timestamp}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between gap-2">
+                  <span
+                    className={`truncate text-sm ${
+                      hasUnread ? "font-semibold text-text" : "text-subtle"
+                    }`}
+                  >
+                    {previewMessage(chat.latestMessage)}
+                  </span>
+                  {hasUnread && (
+                    <span
+                      className="chatList-unreadDot"
+                      role="status"
+                      aria-label="Unread messages"
+                    />
+                  )}
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
     );
   };
 
   return (
-    <Container
-      fluid
+    <div
       /* Tailwind visibility, not Bootstrap's d-none/d-block: those are
          `display: ... !important` and would override the container's grid */
       className={`chatList-container ${
         showChatWindow ? "hidden md:grid" : "grid"
       }`}
     >
-      <Row>
-        <Col className="d-flex justify-content-between pt-2">
-          <h2 className="chatList-title">My Chats</h2>
-          <GroupChatModal>
-            <Button title="New Group Chat" className="chatList-btn">
-              <span className="d-inline d-xl-none">
-                <FaPlus aria-hidden="true" />
-                <span className="visually-hidden">New Group Chat</span>
-              </span>
-              <span className="d-none d-xl-inline">New Group Chat</span>
-            </Button>
-          </GroupChatModal>
-        </Col>
-      </Row>
+      <div className="flex items-center justify-between pt-2">
+        <h2 className="chatList-title">My Chats</h2>
+        <GroupChatModal>
+          <button type="button" title="New Group Chat" className="chatList-btn">
+            <span className="inline-flex items-center gap-1.5 xl:hidden">
+              <Plus size={16} aria-hidden="true" />
+              <span className="sr-only">New Group Chat</span>
+            </span>
+            <span className="hidden xl:inline">New Group Chat</span>
+          </button>
+        </GroupChatModal>
+      </div>
       {renderChats()}
-    </Container>
+    </div>
   );
 };
 

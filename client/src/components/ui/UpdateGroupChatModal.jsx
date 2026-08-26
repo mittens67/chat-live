@@ -1,32 +1,32 @@
 import { useState } from "react";
-import UserBadgeItem from "./UserBadgeItem";
-import { ChatState } from "../../context/ChatProvider";
 import toast from "react-hot-toast";
+import { Pencil } from "lucide-react";
 
-import Button from "react-bootstrap/Button";
-import Modal from "react-bootstrap/Modal";
-import Row from "react-bootstrap/Row";
-import Form from "react-bootstrap/Form";
-import InputGroup from "react-bootstrap/InputGroup";
+import UserBadgeItem from "./UserBadgeItem";
 import Loading from "./Loading";
 import UserListItem from "./UserListItem";
-import { FaEdit } from "react-icons/fa";
+import { ChatState } from "../../context/ChatProvider";
 import api, { errorMessage } from "../../lib/api";
 import { useUserSearch } from "../../lib/useUserSearch";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "./primitives/Dialog";
 
 //fetchAgain is no longer needed as a prop: the flips below use the functional
 //updater form, so this never has to read the current value
 const UpdateGroupChatModal = ({ fetchMessages, setFetchAgain }) => {
-  const [show, setShow] = useState(false);
+  const [open, setOpen] = useState(false);
   const [groupChatName, setGroupChatName] = useState("");
   const [loading, setLoading] = useState(false);
   const [renameLoading, setRenameLoading] = useState(false);
 
   const { selectedChat, setSelectedChat, user } = ChatState();
   const { query, setQuery, results, loading: searching } = useUserSearch();
-
-  const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
 
   const isAdmin = selectedChat?.groupAdmin?._id === user._id;
 
@@ -99,7 +99,7 @@ const UpdateGroupChatModal = ({ fetchMessages, setFetchAgain }) => {
       if (isSelf) {
         //Leaving closes the chat; there is nothing left to refetch
         setSelectedChat(undefined);
-        handleClose();
+        setOpen(false);
       } else {
         setSelectedChat(data);
         fetchMessages();
@@ -114,23 +114,20 @@ const UpdateGroupChatModal = ({ fetchMessages, setFetchAgain }) => {
   };
 
   return (
-    <>
-      <Button className="modal-btn" onClick={handleShow} aria-label="Edit group">
-        <FaEdit aria-hidden="true" />
-      </Button>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <button type="button" className="modal-btn" aria-label="Edit group">
+          <Pencil size={16} aria-hidden="true" />
+        </button>
+      </DialogTrigger>
 
-      <Modal
-        show={show}
-        centered
-        onHide={handleClose}
-      >
-        <Modal.Header closeButton className="border-0 text-center">
-          <Modal.Title className="w-100 updateGroup-title">
-            {selectedChat.chatName}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="text-center w-100 p-5">
-          <Row className="mb-3">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{selectedChat.chatName}</DialogTitle>
+        </DialogHeader>
+
+        <div className="flex flex-col gap-4 text-left">
+          <div className="flex flex-wrap">
             {selectedChat.users.map((u) => (
               <UserBadgeItem
                 key={u._id}
@@ -145,48 +142,60 @@ const UpdateGroupChatModal = ({ fetchMessages, setFetchAgain }) => {
                 }
               />
             ))}
-          </Row>
+          </div>
 
-          <InputGroup className="mb-3">
-            <Form.Control
-              placeholder="Rename Group"
+          <div className="flex gap-2">
+            <input
+              placeholder="Rename group"
               aria-label="New group name"
               value={groupChatName}
               onChange={(e) => setGroupChatName(e.target.value)}
+              className="field-input"
             />
-            <Button
-              className="updateGroup-btn"
+            <button
+              type="button"
+              className="modal-btn shrink-0"
               disabled={renameLoading}
               onClick={handleRename}
             >
               {renameLoading ? "Saving…" : "Update"}
-            </Button>
-          </InputGroup>
-          <Form.Control
-            placeholder="Add Members"
+            </button>
+          </div>
+
+          <input
+            placeholder="Add members"
             aria-label="Search members to add"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            className="field-input"
           />
+
           {searching || loading ? (
             <Loading />
           ) : (
-            results?.map((result) => (
-              <UserListItem
-                key={result._id}
-                user={result}
-                handler={() => handleAddUser(result)}
-              />
-            ))
+            <div className="max-h-40 overflow-y-auto">
+              {results?.map((result) => (
+                <UserListItem
+                  key={result._id}
+                  user={result}
+                  handler={() => handleAddUser(result)}
+                />
+              ))}
+            </div>
           )}
-        </Modal.Body>
-        <Modal.Footer className="border-0">
-          <Button onClick={() => handleRemove(user)} variant="danger">
+        </div>
+
+        <DialogFooter>
+          <button
+            type="button"
+            onClick={() => handleRemove(user)}
+            className="rounded-md bg-error px-4 py-2 text-sm font-medium text-on-error hover:opacity-90"
+          >
             Leave Group
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    </>
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

@@ -1,7 +1,4 @@
 import { useState } from "react";
-import Button from "react-bootstrap/Button";
-import Modal from "react-bootstrap/Modal";
-import Form from "react-bootstrap/Form";
 import toast from "react-hot-toast";
 import { ChatState } from "../../context/ChatProvider";
 import api, { errorMessage } from "../../lib/api";
@@ -10,32 +7,46 @@ import {
   IMAGE_TYPES,
   DOCUMENT_TYPES,
 } from "../../lib/cloudinary";
-import ModalTrigger from "./ModalTrigger";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "./primitives/Dialog";
 
-const IMAGE = "image/*";
-const FILE =
+const IMAGE_ACCEPT = "image/*";
+const FILE_ACCEPT =
   ".xlsx,.xls,.doc,.docx,.ppt,.pptx,.txt,.pdf,application/pdf,text/plain";
 
-const FileUploadModal = ({ children, title, handler }) => {
-  const [show, setShow] = useState(false);
+/**
+ * Controlled only - no internal trigger.
+ *
+ * This is opened from inside SingleChat's attachment DropdownMenu. Nesting a
+ * Dialog trigger inside an already-open dropdown menu is the one Radix
+ * combination that reliably fights over focus (the menu's own close-and-
+ * return-focus behaviour races the dialog's focus trap); the fix is for the
+ * parent to own `open` state and drive this directly, with no trigger
+ * element here for the two roots to contend over.
+ */
+const FileUploadModal = ({ kind, open, onOpenChange, handler }) => {
   const [loading, setLoading] = useState(false);
-  //Both the URL and what kind of thing it is - the server needs the type and
-  //will no longer guess it from the URL
   const [upload, setUpload] = useState(null);
 
   const { selectedChat } = ChatState();
 
-  const handleClose = () => {
+  const isDocument = kind === "file";
+  const label = isDocument ? "File" : "Image";
+
+  const close = () => {
     setUpload(null);
-    setShow(false);
+    onOpenChange(false);
   };
-  const handleShow = () => setShow(true);
 
   const postDetails = async (file) => {
     if (!file) return;
 
     setLoading(true);
-    const isDocument = title === "File";
 
     try {
       const url = await uploadToCloudinary(file, {
@@ -62,40 +73,40 @@ const FileUploadModal = ({ children, title, handler }) => {
       });
 
       handler(data);
-      handleClose();
+      close();
     } catch (error) {
-      handleClose();
+      close();
       toast.error(errorMessage(error, "Could not send the file"));
     }
   };
 
   return (
-    <>
-      <ModalTrigger onClick={handleShow}>{children}</ModalTrigger>
+    <Dialog open={open} onOpenChange={(next) => (next ? null : close())}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{`Upload ${label}`}</DialogTitle>
+        </DialogHeader>
 
-      <Modal
-        show={show}
-        centered
-        onHide={handleClose}
-      >
-        <Modal.Header closeButton className="border-0 text-center">
-          <Modal.Title className="w-100">{`Upload ${title}`}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="text-center w-100">
-          <Form.Control
-            type="file"
-            aria-label={`Choose a ${title.toLowerCase()} to upload`}
-            accept={title === "File" ? FILE : IMAGE}
-            onChange={(e) => postDetails(e.target.files[0])}
-          />
-        </Modal.Body>
-        <Modal.Footer>
-          <Button disabled={loading || !upload} onClick={handleSendFile}>
+        <input
+          type="file"
+          aria-label={`Choose a ${label.toLowerCase()} to upload`}
+          accept={isDocument ? FILE_ACCEPT : IMAGE_ACCEPT}
+          onChange={(e) => postDetails(e.target.files[0])}
+          className="field-input"
+        />
+
+        <DialogFooter>
+          <button
+            type="button"
+            className="modal-btn"
+            disabled={loading || !upload}
+            onClick={handleSendFile}
+          >
             {loading ? "Uploading..." : "Send"}
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    </>
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

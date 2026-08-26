@@ -1,6 +1,5 @@
-import Button from "react-bootstrap/Button";
+import { ArrowLeft } from "lucide-react";
 import SingleChat from "../ui/SingleChat";
-import { FaArrowLeft } from "react-icons/fa";
 
 const ChatWindow = ({ setFetchAgain, showChatWindow, closeChatWindow }) => {
   return (
@@ -18,14 +17,15 @@ const ChatWindow = ({ setFetchAgain, showChatWindow, closeChatWindow }) => {
         showChatWindow ? "flex" : "hidden md:flex"
       }`}
     >
-      <Button
+      <button
+        type="button"
         title="Go back to chat list"
         onClick={closeChatWindow}
-        className="d-md-none chatWindow-btn"
+        className="chatWindow-btn md:hidden"
       >
-        <FaArrowLeft aria-hidden="true" />
-        <span className="visually-hidden">Go back to chat list</span>
-      </Button>
+        <ArrowLeft size={16} aria-hidden="true" />
+        <span className="sr-only">Go back to chat list</span>
+      </button>
       <SingleChat setFetchAgain={setFetchAgain} />
     </div>
   );

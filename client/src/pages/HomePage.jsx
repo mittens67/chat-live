@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
-import Container from "react-bootstrap/Container";
-import Row from "react-bootstrap/Row";
-import Col from "react-bootstrap/Col";
+import { MessageCircle } from "lucide-react";
 
 import Login from "../components/Auth/Login";
 import Register from "../components/Auth/Register";
@@ -19,20 +17,22 @@ const HomePage = () => {
   if (user?.token) return <Navigate to="/chats" replace />;
 
   return (
-    <Container fluid="sm">
-      <Row className="home-center">
-        <Col sm={3}>
+    <div className="flex min-h-dvh items-center justify-center bg-bg p-4">
+      <div className="home-card">
+        <div className="mb-6 flex flex-col items-center gap-2 text-center">
+          <span className="home-mark">
+            <MessageCircle size={22} aria-hidden="true" />
+          </span>
           <h1 className="home-brand">Chat Live</h1>
-        </Col>
-        <Col sm={9} className="home-form">
-          {isLogin ? (
-            <Login toggleLogin={toggleLogin} />
-          ) : (
-            <Register toggleLogin={toggleLogin} />
-          )}
-        </Col>
-      </Row>
-    </Container>
+        </div>
+
+        {isLogin ? (
+          <Login toggleLogin={toggleLogin} />
+        ) : (
+          <Register toggleLogin={toggleLogin} />
+        )}
+      </div>
+    </div>
   );
 };
 

@@ -50,6 +50,21 @@ const ChatProvider = ({ children }) => {
     setUser(userInfo);
   };
 
+  /**
+   * Selects a chat and marks it read.
+   *
+   * The single place "viewing a chat" and "clearing its unread state" are
+   * linked. Every call site used to call setSelectedChat directly; the bell
+   * dropdown separately filtered out only the one notification that was
+   * clicked, so a chat with several unread messages stayed marked unread
+   * after reading all of them, and opening a chat from the chat list itself
+   * (rather than the bell) never cleared anything at all.
+   */
+  const openChat = (chat) => {
+    setSelectedChat(chat);
+    setNotification((prev) => prev.filter((n) => n.chat._id !== chat._id));
+  };
+
   //Memoised: without this the value object is a new reference on every render,
   //so every consumer re-renders on any state change anywhere
   const value = useMemo(
@@ -60,6 +75,7 @@ const ChatProvider = ({ children }) => {
       logout,
       selectedChat,
       setSelectedChat,
+      openChat,
       chats,
       setChats,
       notification,

@@ -11,15 +11,29 @@
   }
 
   &-scrollableRow {
-    min-height: 0;
-    // change bootstrap defaults here to space items inside this window properly
+    //Was Bootstrap's <Row>, which supplied display:flex itself; now a plain
+    //div, so this has to say so explicitly
+    display: flex;
     flex-direction: column;
-    flex-wrap: nowrap;
+    min-height: 0;
 
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
     scrollbar-color: var(--c-border) transparent;
+  }
+
+  &-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    height: 100%;
+    padding: 1.5rem;
+    text-align: center;
+    color: var(--c-muted);
+    font-size: var(--text-sm);
   }
 
   &-title {
@@ -43,17 +57,17 @@
   }
 
   &-chat {
-    height: 4rem;
+    height: 4.25rem;
     width: 100%;
     margin: 0.125rem 0;
     padding: 0 0.75rem;
     border: none;
     border-radius: var(--radius-md);
     cursor: pointer;
-    font-weight: 500;
     text-align: left;
     display: flex;
     align-items: center;
+    gap: 0.625rem;
     background-color: transparent;
     color: var(--c-text);
 
@@ -71,5 +85,23 @@
     &:hover {
       background-color: var(--c-accent-subtle);
     }
+  }
+
+  &-avatar {
+    height: 2.75rem;
+    width: 2.75rem;
+    flex-shrink: 0;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  //Two cues for "unread", not color alone: this dot, plus the preview text
+  //below switching from muted to full-strength and semibold
+  &-unreadDot {
+    height: 0.5rem;
+    width: 0.5rem;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background-color: var(--c-accent);
   }
 }

@@ -16,18 +16,16 @@
     }
   }
 
-  &-form__title {
-    font-size: var(--text-2xl);
-    font-weight: 700;
-    color: var(--c-text);
-    letter-spacing: -0.02em;
-  }
-
   &-link {
     //Was the accent at full strength, which on the dark surface sat at roughly
     //3:1 - readable as a heading, not as body text
+    display: inline;
+    background: none;
+    border: none;
+    padding: 0;
     color: var(--c-accent-text);
     font-weight: 600;
+    text-decoration: underline;
 
     &:hover {
       color: var(--c-accent);

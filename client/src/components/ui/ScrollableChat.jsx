@@ -1,41 +1,82 @@
 import ScrollableFeed from "react-scrollable-feed";
-import Image from "react-bootstrap/Image";
 
 import { ChatState } from "../../context/ChatProvider";
-import { isValidURL, isLastMessage, isSameSender } from "../../config/chatLogic";
+import {
+  isFirstInGroup,
+  isLastInGroup,
+  formatMessageTime,
+} from "../../config/chatLogic";
 import RenderMessage from "./RenderMessage";
 import { DEFAULT_AVATAR, onAvatarError } from "../../lib/defaultAvatar";
 
-const ScrollableChat = ({ messages }) => {
+const ScrollableChat = ({ messages, isGroupChat }) => {
   const { user } = ChatState();
 
   //ScrollableFeed handles auto-scrolling on its own; the manual
   //scrollIntoView ref that used to live here fought with it.
   return (
     <ScrollableFeed style={{ maxHeight: "100%" }}>
-      {messages?.map((m, i) => (
-        <div style={{ display: "flex" }} key={m._id}>
-          {(isSameSender(messages, m, i, user._id) ||
-            isLastMessage(messages, i, user._id)) && (
-            <Image
-              //m.sender, not user - this avatar marks who *sent* the message,
-              //so showing the logged-in user's picture was always wrong
-              src={m.sender?.picture || DEFAULT_AVATAR}
-              onError={onAvatarError}
-              alt={m.sender?.name || "Unknown sender"}
-              style={{ width: "2rem", height: "2rem" }}
-              roundedCircle
-            />
-          )}
-          <RenderMessage
-            url={isValidURL(m.content)}
-            m={m}
-            user={user}
-            i={i}
-            messages={messages}
-          />
-        </div>
-      ))}
+      <div className="flex flex-col px-1 py-2">
+        {messages?.map((m, i) => {
+          const isOwn = m.sender._id === user._id;
+          const first = isFirstInGroup(messages, i);
+          const last = isLastInGroup(messages, i);
+
+          return (
+            <div
+              key={m._id}
+              className={`flex items-end gap-2 ${
+                isOwn ? "justify-end" : "justify-start"
+              } ${first ? "mt-3" : "mt-0.5"}`}
+            >
+              {!isOwn && (
+                //Fixed-width slot whether or not the avatar renders this row,
+                //so every bubble in a run lines up under the one above it -
+                //replaces the old marginLeft: 33/0/"auto" arithmetic
+                <div className="w-7 shrink-0 self-end">
+                  {last && (
+                    <img
+                      src={m.sender?.picture || DEFAULT_AVATAR}
+                      onError={onAvatarError}
+                      alt={m.sender?.name || "Unknown sender"}
+                      className="h-7 w-7 rounded-full object-cover"
+                    />
+                  )}
+                </div>
+              )}
+
+              <div className={`flex max-w-[75%] flex-col ${isOwn ? "items-end" : "items-start"}`}>
+                {isGroupChat && !isOwn && first && (
+                  <span className="mb-0.5 px-1 text-xs font-medium text-subtle">
+                    {m.sender?.name}
+                  </span>
+                )}
+
+                <div
+                  className="rounded-xl px-3 py-1.5"
+                  style={{
+                    //Tokens rather than hardcoded hex, so bubbles follow the
+                    //theme: the old received bubble was #708871 with
+                    //inherited black text at 2.9:1, failing WCAG AA.
+                    backgroundColor: isOwn
+                      ? "var(--c-sent-bg)"
+                      : "var(--c-received-bg)",
+                    color: isOwn ? "var(--c-sent-text)" : "var(--c-received-text)",
+                  }}
+                >
+                  <RenderMessage message={m} />
+                </div>
+
+                {last && (
+                  <span className="mt-0.5 px-1 text-xs text-subtle">
+                    {formatMessageTime(m.createdAt)}
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </ScrollableFeed>
   );
 };

@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-
-import InputGroup from "react-bootstrap/InputGroup";
-import DropdownButton from "react-bootstrap/DropdownButton";
-import Dropdown from "react-bootstrap/Dropdown";
-import Button from "react-bootstrap/Button";
-import Form from "react-bootstrap/Form";
+import { Paperclip, Send } from "lucide-react";
 
 import ProfileModal from "./ProfileModal";
-import { getSender, getSenderFull } from "../../config/chatLogic";
+import {
+  getSender,
+  getSenderFull,
+  insertMessageInOrder,
+} from "../../config/chatLogic";
 
 import { ChatState } from "../../context/ChatProvider";
 import { useSocket } from "../../context/SocketProvider";
@@ -17,9 +16,14 @@ import ScrollableChat from "./ScrollableChat";
 import TypingIndicator from "./TypingIndicator";
 
 import Loading from "./Loading";
-import { FaPaperclip, FaPaperPlane } from "react-icons/fa";
 import FileUploadModal from "./FileUploadModal";
 import api, { errorMessage } from "../../lib/api";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "./primitives/DropdownMenu";
 
 const TYPING_TIMEOUT = 3000;
 
@@ -28,6 +32,12 @@ const SingleChat = ({ setFetchAgain }) => {
   const [loading, setLoading] = useState(false);
   const [newMessage, setNewMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  //Which upload dialog is open, if any. One shared FileUploadModal instance
+  //parameterized by kind, rather than two - it is opened from inside the
+  //attachment DropdownMenu, and a Dialog trigger nested inside an open
+  //dropdown is the one Radix combination that reliably fights over focus, so
+  //this drives the dialog's `open` state directly instead.
+  const [uploadKind, setUploadKind] = useState(null);
 
   const { selectedChat, user, setNotification } = ChatState();
   const { socket, connected } = useSocket();
@@ -38,6 +48,13 @@ const SingleChat = ({ setFetchAgain }) => {
   const typingRef = useRef(false);
   const typingTimerRef = useRef(null);
   const audioRef = useRef(null);
+  //Chains this chat's own outgoing sends so only one is ever in flight.
+  //sendMessage on the server does several sequential DB round trips
+  //(Message.create, three populate() calls, a Chat update), so two sends
+  //fired close together could both still be in flight at once - and their
+  //writes could then land in either order, showing your own messages out of
+  //the order you sent them in. Queuing removes that window entirely.
+  const sendQueueRef = useRef(Promise.resolve());
 
   useEffect(() => {
     selectedChatRef.current = selectedChat;
@@ -99,9 +116,7 @@ const SingleChat = ({ setFetchAgain }) => {
         );
         setFetchAgain((prev) => !prev);
       } else {
-        setMessages((prev) =>
-          prev.some((m) => m._id === incoming._id) ? prev : [...prev, incoming]
-        );
+        setMessages((prev) => insertMessageInOrder(prev, incoming));
       }
 
       if (!audioRef.current) {
@@ -142,26 +157,28 @@ const SingleChat = ({ setFetchAgain }) => {
   //it persists it, so the client no longer emits its own copy - what recipients
   //saw used to be whatever this browser claimed rather than what was stored.
   const appendOwnMessage = (data) => {
-    setMessages((prev) => [...prev, data]);
+    setMessages((prev) => insertMessageInOrder(prev, data));
   };
 
-  const submitMessage = async () => {
+  const submitMessage = () => {
     const content = newMessage.trim();
     if (!content || !selectedChat) return;
 
     stopTyping();
     setNewMessage("");
+    const chatId = selectedChat._id;
 
-    try {
-      const { data } = await api.post("/message", {
-        content,
-        chatId: selectedChat._id,
+    //Chained onto the previous send rather than fired immediately: this is
+    //what keeps two quick sends from ever being in flight at the same time.
+    //The user can keep typing right away - only the request to the server is
+    //serialized, not the input.
+    sendQueueRef.current = sendQueueRef.current
+      .then(() => api.post("/message", { content, chatId }))
+      .then(({ data }) => appendOwnMessage(data))
+      .catch((error) => {
+        setNewMessage((current) => current || content);
+        toast.error(errorMessage(error, "Could not send message"));
       });
-      appendOwnMessage(data);
-    } catch (error) {
-      setNewMessage(content);
-      toast.error(errorMessage(error, "Could not send message"));
-    }
   };
 
   const handleKeyDown = (e) => {
@@ -215,41 +232,61 @@ const SingleChat = ({ setFetchAgain }) => {
               <Loading />
             ) : (
               <div className="singleChat-box__messages">
-                <ScrollableChat messages={messages} />
+                <ScrollableChat
+                  messages={messages}
+                  isGroupChat={selectedChat.isGroupChat}
+                />
               </div>
             )}
             {isTyping ? <TypingIndicator /> : null}
-            <InputGroup>
-              <Form.Control
+
+            <div className="composer">
+              <input
                 placeholder="Enter a message"
                 aria-label="Message"
                 onKeyDown={handleKeyDown}
                 onChange={typingHandler}
                 value={newMessage}
+                className="composer-input"
               />
-              <DropdownButton
-                variant="outline-secondary"
-                title={<FaPaperclip aria-hidden="true" />}
-                id="input-group-dropdown-2"
-                align="end"
-              >
-                <FileUploadModal title="File" handler={appendOwnMessage}>
-                  <Dropdown.Item>Upload File</Dropdown.Item>
-                </FileUploadModal>
-                <Dropdown.Divider />
-                <FileUploadModal title="Image" handler={appendOwnMessage}>
-                  <Dropdown.Item>Upload Image</Dropdown.Item>
-                </FileUploadModal>
-              </DropdownButton>
-              <Button
-                variant="outline-secondary"
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="composer-btn"
+                    aria-label="Attach a file"
+                  >
+                    <Paperclip size={16} aria-hidden="true" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onSelect={() => setUploadKind("file")}>
+                    Upload File
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setUploadKind("image")}>
+                    Upload Image
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <button
+                type="button"
                 onClick={submitMessage}
                 disabled={!newMessage.trim()}
                 aria-label="Send message"
+                className="composer-btn composer-btn--send"
               >
-                <FaPaperPlane aria-hidden="true" />
-              </Button>
-            </InputGroup>
+                <Send size={16} aria-hidden="true" />
+              </button>
+            </div>
+
+            <FileUploadModal
+              kind={uploadKind}
+              open={Boolean(uploadKind)}
+              onOpenChange={(next) => !next && setUploadKind(null)}
+              handler={appendOwnMessage}
+            />
           </div>
         </>
       )}

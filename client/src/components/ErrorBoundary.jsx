@@ -1,5 +1,4 @@
 import { Component } from "react";
-import Button from "react-bootstrap/Button";
 
 /**
  * Catches render-time errors so one bad value can't white-screen the app.
@@ -23,12 +22,16 @@ class ErrorBoundary extends Component {
     if (!this.state.hasError) return this.props.children;
 
     return (
-      <div className="error-boundary">
-        <h1>Something went wrong</h1>
-        <p>The page hit an unexpected error.</p>
-        <Button onClick={() => window.location.assign("/")}>
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-3 bg-bg p-6 text-center text-text">
+        <h1 className="text-xl font-semibold">Something went wrong</h1>
+        <p className="text-subtle">The page hit an unexpected error.</p>
+        <button
+          type="button"
+          onClick={() => window.location.assign("/")}
+          className="mt-2 rounded-md bg-accent px-4 py-2 font-medium text-on-accent hover:bg-accent-hover"
+        >
           Back to safety
-        </Button>
+        </button>
       </div>
     );
   }

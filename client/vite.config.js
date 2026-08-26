@@ -50,7 +50,6 @@ export default defineConfig({
         // Split vendor code so app changes don't invalidate the whole bundle
         manualChunks: {
           react: ['react', 'react-dom', 'react-router-dom'],
-          bootstrap: ['react-bootstrap'],
           socket: ['socket.io-client'],
         },
       },

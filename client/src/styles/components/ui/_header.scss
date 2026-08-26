@@ -20,8 +20,12 @@
     text-decoration: none;
     display: flex;
     align-items: center;
+    background: transparent;
+    border: none;
     color: var(--c-text);
     border-radius: var(--radius-sm);
+    padding: 0.375rem 0.5rem;
+    font: inherit;
 
     &:hover {
       color: var(--c-accent);
@@ -34,36 +38,45 @@
 
   &-container {
     display: flex;
+    align-items: center;
+    gap: 0.25rem;
   }
 
   &-dropdown {
+    display: flex;
+    align-items: center;
+    background: transparent;
+    border: none;
     color: var(--c-text);
+    border-radius: var(--radius-sm);
+    padding: 0.375rem 0.5rem;
+
+    &:hover {
+      color: var(--c-accent);
+    }
   }
 
   &-badge {
-    background-color: var(--c-accent);
-    color: var(--c-on-accent);
-  }
-}
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.125rem;
+    height: 1.125rem;
+    padding: 0 0.25rem;
+    margin-left: 0.375rem;
+    border-radius: 999px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    background-color: var(--c-border);
+    color: var(--c-muted);
 
-//Still overriding Bootstrap so the dropdown does not overflow the viewport.
-//Goes away with the header redesign, when Bootstrap's dropdown does.
-.dropdown-menu {
-  right: 0 !important;
-  left: auto !important;
-  background-color: var(--c-surface);
-  color: var(--c-text);
-  border: 1px solid var(--c-border);
-  box-shadow: var(--elevation-md);
-}
-
-.dropdown-item {
-  color: var(--c-text);
-
-  &:hover,
-  &:focus {
-    background-color: var(--c-accent-subtle);
-    color: var(--c-text);
+    //Set from JSX only when notification.length > 0. Reads the underlying
+    //--c-danger custom property directly - --color-error only exists as a
+    //Tailwind theme key that generates utility classes, not a real variable.
+    &[data-unread] {
+      background-color: var(--c-danger);
+      color: var(--c-on-danger);
+    }
   }
 }
 
@@ -85,8 +98,7 @@
     }
 
     &-brand {
-      //Was `semibold`, which is not a valid CSS value and was dropped silently
-      font-weight: 600;
+      font-size: var(--text-lg);
     }
   }
 

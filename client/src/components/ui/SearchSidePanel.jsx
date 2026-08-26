@@ -1,29 +1,20 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { Search } from "lucide-react";
 import { ChatState } from "../../context/ChatProvider";
-import Col from "react-bootstrap/Col";
-import Container from "react-bootstrap/Container";
-import Row from "react-bootstrap/Row";
-import Offcanvas from "react-bootstrap/Offcanvas";
-import Form from "react-bootstrap/Form";
-import InputGroup from "react-bootstrap/InputGroup";
-import { FaSearch } from "react-icons/fa";
 
 import Loading from "./Loading";
 import UserListItem from "./UserListItem";
 import api, { errorMessage } from "../../lib/api";
 import { useUserSearch } from "../../lib/useUserSearch";
-import ModalTrigger from "./ModalTrigger";
+import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "./primitives/Sheet";
 
 const SearchSidePanel = ({ children }) => {
-  const [show, setShow] = useState(false);
+  const [open, setOpen] = useState(false);
   const [loadingChat, setLoadingChat] = useState(false);
 
-  const { setSelectedChat, chats, setChats } = ChatState();
+  const { openChat, chats, setChats } = ChatState();
   const { query, setQuery, results, loading } = useUserSearch();
-
-  const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
 
   const accessChat = async (userId) => {
     setLoadingChat(true);
@@ -38,8 +29,8 @@ const SearchSidePanel = ({ children }) => {
         setChats([data, ...existing]);
       }
 
-      setSelectedChat(data);
-      handleClose();
+      openChat(data);
+      setOpen(false);
     } catch (err) {
       toast.error(errorMessage(err, "Could not open that chat"));
     } finally {
@@ -48,57 +39,42 @@ const SearchSidePanel = ({ children }) => {
   };
 
   return (
-    <>
-      <ModalTrigger onClick={handleShow}>{children}</ModalTrigger>
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>{children}</SheetTrigger>
 
-      <Offcanvas
-        show={show}
-        onHide={handleClose}
-      >
-        <Offcanvas.Header closeButton>
-          <Offcanvas.Title className="sidePanel-title">
-            Search Users
-          </Offcanvas.Title>
-        </Offcanvas.Header>
-        <Offcanvas.Body>
-          <Container>
-            <Row className="pb-2">
-              <Col xs={12}>
-                {/* Results come from a debounced hook now, so there is no
-                    search button to press and Enter no longer does nothing */}
-                <InputGroup className="sidePanel-search">
-                  <InputGroup.Text>
-                    <FaSearch aria-hidden="true" />
-                  </InputGroup.Text>
-                  <Form.Control
-                    placeholder="Search by name or email"
-                    aria-label="Search users"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                  />
-                </InputGroup>
-              </Col>
-            </Row>
-            {loading ? (
-              <Row>
-                <Col xs={12}>
-                  <Loading />
-                </Col>
-              </Row>
-            ) : (
-              results?.map((result) => (
-                <UserListItem
-                  key={result._id}
-                  user={result}
-                  handler={() => accessChat(result._id)}
-                />
-              ))
-            )}
-            {loadingChat && <Loading />}
-          </Container>
-        </Offcanvas.Body>
-      </Offcanvas>
-    </>
+      <SheetContent side="left">
+        <SheetHeader>
+          <SheetTitle>Search Users</SheetTitle>
+        </SheetHeader>
+
+        <div className="flex flex-col gap-3">
+          {/* Results come from a debounced hook now, so there is no search
+              button to press and Enter no longer does nothing */}
+          <div className="sidePanel-search">
+            <Search size={16} aria-hidden="true" className="text-subtle shrink-0" />
+            <input
+              placeholder="Search by name or email"
+              aria-label="Search users"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-subtle"
+            />
+          </div>
+
+          {loading || loadingChat ? (
+            <Loading />
+          ) : (
+            results?.map((result) => (
+              <UserListItem
+                key={result._id}
+                user={result}
+                handler={() => accessChat(result._id)}
+              />
+            ))
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 };
 
