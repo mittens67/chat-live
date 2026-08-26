@@ -3,12 +3,17 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    width: 100%;
     background-color: transparent;
     border: none;
-    border-radius: var(--radius-md);
-    margin: 0.125rem 0;
-    padding: 0.5rem 0.625rem;
+    border-bottom: 1px solid var(--c-border);
+    padding: 0.625rem;
     text-align: left;
+    transition: background-color 0.15s ease;
+
+    &:last-child {
+        border-bottom: none;
+    }
 
     &:hover {
         background-color: var(--c-raised);

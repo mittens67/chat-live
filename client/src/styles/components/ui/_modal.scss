@@ -1,4 +1,4 @@
-/** Shared across every Dialog/Sheet body: primary button, title, field label. */
+/** Shared across every Dialog/Sheet/AlertDialog body: the button variants. */
 .modal {
   &-btn {
     background-color: var(--c-accent);
@@ -23,8 +23,28 @@
     }
   }
 
-  &-label {
-    color: var(--c-muted);
-    font-weight: 500;
+  &-btn--ghost {
+    background-color: transparent;
+    color: var(--c-text);
+    border-color: var(--c-border);
+
+    &:hover:not(:disabled) {
+      background-color: var(--c-raised);
+      color: var(--c-text);
+      border-color: var(--c-border);
+    }
+  }
+
+  &-btn--danger {
+    background-color: var(--c-danger);
+    color: var(--c-on-danger);
+    border-color: var(--c-danger);
+
+    &:hover:not(:disabled) {
+      background-color: var(--c-danger);
+      color: var(--c-on-danger);
+      border-color: var(--c-danger);
+      opacity: 0.9;
+    }
   }
 }

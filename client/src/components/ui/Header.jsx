@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Bell } from "lucide-react";
+import { Search, Bell, MessageCircle } from "lucide-react";
 
 import { ChatState } from "../../context/ChatProvider";
 import ProfileModal from "./ProfileModal";
@@ -41,6 +41,9 @@ const Header = () => {
       {/* Link, not a raw href - a raw href triggered a full page reload and a
           fresh socket connection */}
       <Link to="/chats" className="header-brand no-underline">
+        <span className="header-mark">
+          <MessageCircle size={16} aria-hidden="true" />
+        </span>
         Chat Live
       </Link>
 
@@ -53,12 +56,9 @@ const Header = () => {
               aria-label={`Notifications (${notification.length} unread)`}
             >
               <Bell size={16} aria-hidden="true" />
-              <span
-                className="header-badge"
-                data-unread={notification.length > 0 ? "" : undefined}
-              >
-                {notification.length}
-              </span>
+              {notification.length > 0 && (
+                <span className="header-badge">{notification.length}</span>
+              )}
             </button>
           </DropdownMenuTrigger>
 

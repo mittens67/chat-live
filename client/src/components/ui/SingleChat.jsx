@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { Paperclip, Send } from "lucide-react";
+import { Paperclip, Send, ArrowLeft, MessagesSquare } from "lucide-react";
 
 import ProfileModal from "./ProfileModal";
 import {
@@ -18,6 +18,7 @@ import TypingIndicator from "./TypingIndicator";
 import Loading from "./Loading";
 import FileUploadModal from "./FileUploadModal";
 import api, { errorMessage } from "../../lib/api";
+import { DEFAULT_AVATAR, GROUP_AVATAR, onAvatarError } from "../../lib/defaultAvatar";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -27,7 +28,7 @@ import {
 
 const TYPING_TIMEOUT = 3000;
 
-const SingleChat = ({ setFetchAgain }) => {
+const SingleChat = ({ setFetchAgain, onBack }) => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [newMessage, setNewMessage] = useState("");
@@ -158,6 +159,11 @@ const SingleChat = ({ setFetchAgain }) => {
   //saw used to be whatever this browser claimed rather than what was stored.
   const appendOwnMessage = (data) => {
     setMessages((prev) => insertMessageInOrder(prev, data));
+    //Refetches the chat list so its own preview/timestamp update too. Without
+    //this, sending a message only updated the open conversation - the sender's
+    //own row in the list kept showing the old "latestMessage" until something
+    //else happened to trigger a refetch (e.g. the recipient replying).
+    setFetchAgain((prev) => !prev);
   };
 
   const submitMessage = () => {
@@ -205,22 +211,48 @@ const SingleChat = ({ setFetchAgain }) => {
     typingTimerRef.current = setTimeout(stopTyping, TYPING_TIMEOUT);
   };
 
+  const backButton = onBack && (
+    <button
+      type="button"
+      title="Go back to chat list"
+      onClick={onBack}
+      className="singleChat-back md:hidden"
+    >
+      <ArrowLeft size={18} aria-hidden="true" />
+      <span className="sr-only">Go back to chat list</span>
+    </button>
+  );
+
   return (
     <div className="singleChat">
       {!selectedChat ? (
         <div className="singleChat-blank">
+          <MessagesSquare size={40} aria-hidden="true" />
           <p>Click on a user to start chatting</p>
         </div>
       ) : (
         <>
           {!selectedChat.isGroupChat ? (
             <div className="singleChat-header">
-              <p>{getSender(user, selectedChat.users)}</p>
+              <div className="singleChat-headerInfo">
+                {backButton}
+                <img
+                  src={getSenderFull(user, selectedChat.users)?.picture || DEFAULT_AVATAR}
+                  onError={onAvatarError}
+                  alt=""
+                  className="singleChat-avatar"
+                />
+                <p>{getSender(user, selectedChat.users)}</p>
+              </div>
               <ProfileModal user={getSenderFull(user, selectedChat.users)} />
             </div>
           ) : (
             <div className="singleChat-header">
-              <p>{selectedChat.chatName?.toUpperCase()}</p>
+              <div className="singleChat-headerInfo">
+                {backButton}
+                <img src={GROUP_AVATAR} alt="" className="singleChat-avatar" />
+                <p>{selectedChat.chatName?.toUpperCase()}</p>
+              </div>
               <UpdateGroupChatModal
                 fetchMessages={fetchMessages}
                 setFetchAgain={setFetchAgain}

@@ -2,11 +2,15 @@
 
 .auth {
   &-btn {
+    height: 2.5rem;
+    padding: 0 1rem;
     background-color: var(--c-accent);
     color: var(--c-on-accent);
     border: 1px solid var(--c-accent);
     font-weight: 600;
+    font-size: var(--text-base);
     border-radius: var(--radius-sm);
+    transition: background-color 0.15s ease, border-color 0.15s ease;
 
     &:hover,
     &:focus {
@@ -14,21 +18,9 @@
       color: var(--c-on-accent);
       border-color: var(--c-accent-hover);
     }
-  }
 
-  &-link {
-    //Was the accent at full strength, which on the dark surface sat at roughly
-    //3:1 - readable as a heading, not as body text
-    display: inline;
-    background: none;
-    border: none;
-    padding: 0;
-    color: var(--c-accent-text);
-    font-weight: 600;
-    text-decoration: underline;
-
-    &:hover {
-      color: var(--c-accent);
+    &:disabled {
+      opacity: 0.7;
     }
   }
 }

@@ -1,4 +1,4 @@
-import { Eye } from "lucide-react";
+import { Eye, Mail } from "lucide-react";
 import { DEFAULT_AVATAR, onAvatarError } from "../../lib/defaultAvatar";
 import {
   Dialog,
@@ -46,12 +46,12 @@ const ProfileModal = ({ user, open, onOpenChange }) => {
             src={user.picture || DEFAULT_AVATAR}
             onError={onAvatarError}
             alt=""
-            className="h-28 w-28 rounded-full object-cover"
+            className="h-28 w-28 rounded-full object-cover shadow-[0_0_0_3px_var(--c-border)]"
           />
-          <p className="text-sm">
-            <span className="modal-label">Email: </span>
-            {user.email}
-          </p>
+          <div className="flex w-full items-center gap-2 rounded-md bg-raised px-3 py-2 text-left text-sm">
+            <Mail size={16} aria-hidden="true" className="shrink-0 text-subtle" />
+            <span className="truncate">{user.email}</span>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

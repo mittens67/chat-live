@@ -1,6 +1,6 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { Search } from "lucide-react";
+import { Search, SearchX, Users } from "lucide-react";
 import { ChatState } from "../../context/ChatProvider";
 
 import Loading from "./Loading";
@@ -63,8 +63,18 @@ const SearchSidePanel = ({ children }) => {
 
           {loading || loadingChat ? (
             <Loading />
+          ) : !query.trim() ? (
+            <div className="sidePanel-empty">
+              <Users size={28} aria-hidden="true" />
+              <p>Search by name or email to start a chat</p>
+            </div>
+          ) : results.length === 0 ? (
+            <div className="sidePanel-empty">
+              <SearchX size={28} aria-hidden="true" />
+              <p>No users found for &ldquo;{query.trim()}&rdquo;</p>
+            </div>
           ) : (
-            results?.map((result) => (
+            results.map((result) => (
               <UserListItem
                 key={result._id}
                 user={result}

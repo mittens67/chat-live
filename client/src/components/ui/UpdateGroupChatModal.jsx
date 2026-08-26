@@ -16,6 +16,17 @@ import {
   DialogTitle,
   DialogFooter,
 } from "./primitives/Dialog";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "./primitives/AlertDialog";
 
 //fetchAgain is no longer needed as a prop: the flips below use the functional
 //updater form, so this never has to read the current value
@@ -173,7 +184,7 @@ const UpdateGroupChatModal = ({ fetchMessages, setFetchAgain }) => {
           {searching || loading ? (
             <Loading />
           ) : (
-            <div className="max-h-40 overflow-y-auto">
+            <div className="max-h-40 overflow-y-auto mask-[linear-gradient(to_bottom,transparent,black_12px,black_calc(100%-12px),transparent)]">
               {results?.map((result) => (
                 <UserListItem
                   key={result._id}
@@ -186,13 +197,28 @@ const UpdateGroupChatModal = ({ fetchMessages, setFetchAgain }) => {
         </div>
 
         <DialogFooter>
-          <button
-            type="button"
-            onClick={() => handleRemove(user)}
-            className="rounded-md bg-error px-4 py-2 text-sm font-medium text-on-error hover:opacity-90"
-          >
-            Leave Group
-          </button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button type="button" className="modal-btn modal-btn--danger">
+                Leave Group
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Leave {selectedChat.chatName}?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  You&apos;ll stop receiving messages from this group. An admin
+                  can add you back later.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={() => handleRemove(user)}>
+                  Leave Group
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </DialogFooter>
       </DialogContent>
     </Dialog>

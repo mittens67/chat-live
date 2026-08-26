@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, AlertTriangle, MessageSquarePlus } from "lucide-react";
 import { ChatState } from "../../context/ChatProvider";
 
 import Loading from "../ui/Loading";
@@ -42,6 +42,7 @@ const ChatList = ({ fetchAgain, showChatWindow, openChatWindow }) => {
     if (error) {
       return (
         <div className="chatList-empty">
+          <AlertTriangle size={28} aria-hidden="true" />
           <p>{error}</p>
           <button type="button" className="chatList-btn" onClick={fetchChats}>
             Retry
@@ -55,6 +56,7 @@ const ChatList = ({ fetchAgain, showChatWindow, openChatWindow }) => {
     if (chats.length === 0) {
       return (
         <div className="chatList-empty">
+          <MessageSquarePlus size={28} aria-hidden="true" />
           <p>No chats yet. Search for someone to start one.</p>
         </div>
       );

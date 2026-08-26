@@ -5,22 +5,6 @@
   min-height: 0;
   height: 100%;
   border-left: 1px solid var(--c-border);
-
-  &-btn {
-    border: 1px solid var(--c-border);
-    background-color: var(--c-surface);
-    color: var(--c-text);
-    font-weight: 500;
-    height: 2rem;
-    display: flex;
-    align-items: center;
-    border-radius: var(--radius-sm);
-
-    &:hover {
-      background-color: var(--c-accent-subtle);
-      color: var(--c-text);
-    }
-  }
 }
 
 @media (max-width: 767.98px) {

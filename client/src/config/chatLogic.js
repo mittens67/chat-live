@@ -165,3 +165,20 @@ export const previewMessage = (message) => {
 
   return message.content;
 };
+
+const SIZE_UNITS = ["B", "KB", "MB", "GB"];
+
+/** e.g. 2_500_000 -> "2.4 MB", for the file-attachment card. */
+export const formatFileSize = (bytes) => {
+  if (!bytes || bytes <= 0) return null;
+
+  let value = bytes;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < SIZE_UNITS.length - 1) {
+    value /= 1024;
+    unitIndex++;
+  }
+
+  const precision = unitIndex > 0 && value < 10 ? 1 : 0;
+  return `${value.toFixed(precision)} ${SIZE_UNITS[unitIndex]}`;
+};

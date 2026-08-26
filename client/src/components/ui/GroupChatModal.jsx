@@ -119,7 +119,7 @@ const GroupChatModal = ({ children }) => {
           {loading ? (
             <Loading />
           ) : (
-            <div className="max-h-48 overflow-y-auto">
+            <div className="max-h-48 overflow-y-auto mask-[linear-gradient(to_bottom,transparent,black_12px,black_calc(100%-12px),transparent)]">
               {results?.slice(0, 4).map((result) => (
                 <UserListItem
                   user={result}

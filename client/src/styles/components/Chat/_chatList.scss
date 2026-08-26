@@ -28,12 +28,17 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
     height: 100%;
     padding: 1.5rem;
     text-align: center;
     color: var(--c-muted);
     font-size: var(--text-sm);
+
+    svg {
+      margin-bottom: 0.25rem;
+      color: var(--c-border);
+    }
   }
 
   &-title {
@@ -59,10 +64,9 @@
   &-chat {
     height: 4.25rem;
     width: 100%;
-    margin: 0.125rem 0;
     padding: 0 0.75rem;
     border: none;
-    border-radius: var(--radius-md);
+    border-bottom: 1px solid var(--c-border);
     cursor: pointer;
     text-align: left;
     display: flex;
@@ -70,9 +74,14 @@
     gap: 0.625rem;
     background-color: transparent;
     color: var(--c-text);
+    transition: background-color 0.15s ease;
 
     &:hover {
       background-color: var(--c-raised);
+    }
+
+    &:last-child {
+      border-bottom: none;
     }
   }
 

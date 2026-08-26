@@ -53,16 +53,11 @@ const ScrollableChat = ({ messages, isGroupChat }) => {
                 )}
 
                 <div
-                  className="rounded-xl px-3 py-1.5"
-                  style={{
-                    //Tokens rather than hardcoded hex, so bubbles follow the
-                    //theme: the old received bubble was #708871 with
-                    //inherited black text at 2.9:1, failing WCAG AA.
-                    backgroundColor: isOwn
-                      ? "var(--c-sent-bg)"
-                      : "var(--c-received-bg)",
-                    color: isOwn ? "var(--c-sent-text)" : "var(--c-received-text)",
-                  }}
+                  className={`rounded-xl px-3 py-1.5 ${
+                    isOwn
+                      ? `bg-sent text-sent-text ${last ? "rounded-br-sm" : ""}`
+                      : `bg-received text-received-text ${last ? "rounded-bl-sm" : ""}`
+                  }`}
                 >
                   <RenderMessage message={m} />
                 </div>

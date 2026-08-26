@@ -24,3 +24,34 @@
   color: var(--c-text);
   letter-spacing: -0.01em;
 }
+
+.home-tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  margin-bottom: 1.25rem;
+  background-color: var(--c-raised);
+  border-radius: var(--radius-md);
+}
+
+.home-tab {
+  flex: 1;
+  padding: 0.5rem;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--c-muted);
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover:not([data-active]) {
+    color: var(--c-text);
+  }
+
+  &[data-active] {
+    background-color: var(--c-surface);
+    color: var(--c-accent);
+    box-shadow: var(--elevation-sm);
+  }
+}

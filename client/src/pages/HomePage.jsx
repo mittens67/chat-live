@@ -8,7 +8,6 @@ import { ChatState } from "../context/ChatProvider";
 
 const HomePage = () => {
   const [isLogin, setIsLogin] = useState(true);
-  const toggleLogin = () => setIsLogin((prev) => !prev);
 
   //user comes from context; this page used to keep its own unused copy read
   //straight from localStorage
@@ -26,11 +25,30 @@ const HomePage = () => {
           <h1 className="home-brand">Chat Live</h1>
         </div>
 
-        {isLogin ? (
-          <Login toggleLogin={toggleLogin} />
-        ) : (
-          <Register toggleLogin={toggleLogin} />
-        )}
+        <div className="home-tabs" role="tablist" aria-label="Login or create an account">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={isLogin}
+            data-active={isLogin ? "" : undefined}
+            className="home-tab"
+            onClick={() => setIsLogin(true)}
+          >
+            Login
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={!isLogin}
+            data-active={!isLogin ? "" : undefined}
+            className="home-tab"
+            onClick={() => setIsLogin(false)}
+          >
+            Register
+          </button>
+        </div>
+
+        {isLogin ? <Login /> : <Register />}
       </div>
     </div>
   );
