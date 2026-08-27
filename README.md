@@ -1,6 +1,6 @@
 # Chat Live
 
-A real-time messaging application built with the MERN stack and Socket.io. One-to-one and group conversations, live typing indicators, unread-message notifications, file and image attachments, and a light/dark theme.
+A real-time messaging application built with the MERN stack and Socket.io. One-to-one and group conversations, emoji, image/video/file sharing, typing indicators, unread-message notifications, and a light/dark theme with a custom design system.
 
 **Live demo:** https://chat-live-qziv.onrender.com
 _(hosted on Render's free tier, so the first request may take ~30s to wake the server)_
@@ -9,36 +9,37 @@ _(hosted on Render's free tier, so the first request may take ~30s to wake the s
 
 ## Screenshots
 
-> _Add screenshots to `docs/` and reference them here — a login shot, the chat
-> window mid-conversation, and the group management modal cover the app well._
-
 | Login | Conversation | Group management |
 | ----- | ------------ | ---------------- |
-| _tbd_ | _tbd_        | _tbd_            |
+| ![Login screen](docs/login.png) | ![A conversation, with an emoji-only message rendered large](docs/conversation.png) | ![Group management: members, rename, leave](docs/group-management.png) |
 
 ---
 
 ## Features
 
-- **Real-time messaging** over Socket.io with an authenticated handshake
-- **One-to-one and group chats**, with admin-controlled membership
+- **Real-time messaging** over Socket.io with an authenticated handshake, fanned out server-side so a client can never forge what a recipient sees
+- **One-to-one and group chats**, with admin-controlled membership — adding someone or creating a group notifies them immediately, not just once a message is sent
+- **Emoji picker**, with emoji-only messages rendered large and bubble-free
+- **Image, video, and file sharing** via Cloudinary — drag-drop upload with a live preview and progress bar, client-side size guards, image lightbox, video poster frames
 - **Typing indicators** and **unread-message notifications**
-- **File and image attachments** via Cloudinary
 - **JWT authentication** with bcrypt-hashed passwords
-- **Light and dark themes**, persisted across sessions
+- **Light and dark themes**, persisted across sessions, driven by a single `data-theme` mechanism
 - **Responsive layout** that collapses to a single pane on mobile
+- **A real design system** — Tailwind v4 tokens (color, type, spacing, elevation) and themed Radix UI primitives (dialogs, dropdowns, popovers) instead of a component library
 
 ## Tech stack
 
-| Layer     | Technology                                            |
-| --------- | ----------------------------------------------------- |
-| Frontend  | React 18, Vite, React Router 6, React-Bootstrap, Sass  |
-| Realtime  | Socket.io                                             |
-| Backend   | Node.js, Express 4                                    |
-| Database  | MongoDB with Mongoose                                 |
-| Auth      | JSON Web Tokens, bcryptjs                             |
-| Uploads   | Cloudinary                                            |
-| Testing   | Vitest, Supertest, mongodb-memory-server              |
+| Layer     | Technology                                                        |
+| --------- | ------------------------------------------------------------------ |
+| Frontend  | React 18, Vite, React Router 6, Tailwind v4, Radix UI primitives, Sass |
+| Realtime  | Socket.io                                                           |
+| Backend   | Node.js, Express 4                                                  |
+| Database  | MongoDB with Mongoose                                               |
+| Auth      | JSON Web Tokens, bcryptjs                                           |
+| Uploads   | Cloudinary (image / video / raw)                                    |
+| Icons     | lucide-react                                                        |
+| Emoji     | emoji-picker-react, lazy-loaded                                     |
+| Testing   | Vitest, Supertest, mongodb-memory-server                            |
 
 ---
 
@@ -113,13 +114,14 @@ and start a chat between them.
 
 **Server** (`.env`)
 
-| Variable      | Required | Description                                              |
-| ------------- | -------- | -------------------------------------------------------- |
-| `MONGO_URI`   | yes      | MongoDB connection string                                 |
-| `JWT_SECRET`  | yes      | Secret for signing JWTs; at least 32 characters           |
-| `PORT`        | no       | API port (default `3000`)                                 |
-| `NODE_ENV`    | no       | `development`, `production`, or `test`                    |
-| `CORS_ORIGIN` | no       | Allowed origin in development (default `localhost:5173`)  |
+| Variable                | Required | Description                                                                                     |
+| ----------------------- | -------- | ------------------------------------------------------------------------------------------------- |
+| `MONGO_URI`             | yes      | MongoDB connection string                                                                          |
+| `JWT_SECRET`            | yes      | Secret for signing JWTs; at least 32 characters                                                    |
+| `PORT`                  | no       | API port (default `3000`)                                                                          |
+| `NODE_ENV`              | no       | `development`, `production`, or `test`                                                             |
+| `CORS_ORIGIN`           | no       | Allowed origin in development (default `localhost:5173`)                                           |
+| `CLOUDINARY_CLOUD_NAME` | no       | Same cloud name as the client's `VITE_CLOUDINARY_CLOUD_NAME` — not a secret. Used to verify an attachment URL actually points at your own Cloudinary account before it's stored and broadcast. Leave unset and attachments are refused; everything else works. |
 
 **Client** (`client/.env`) — these are bundled into the browser build, so never
 put a secret here.
@@ -185,19 +187,31 @@ All `/api/chat` and `/api/message` routes require an
 
 ### Socket events
 
-The handshake requires a JWT: `io(url, { auth: { token } })`.
+The handshake requires a JWT: `io(url, { auth: { token } })`. The server joins
+every connection to a room named for its own user id — the addressing
+primitive every event below is built on — and never accepts a message payload
+from a client; messages are only ever broadcast from the persisted document
+after `POST /api/message` writes it, so a client cannot forge what a
+recipient sees.
 
-| Direction       | Event              | Payload  |
-| --------------- | ------------------ | -------- |
-| Server → client | `connected`        | —        |
-| Client → server | `join chat`        | `chatId` |
-| Client → server | `new message`      | message  |
-| Server → client | `message recieved` | message  |
-| Client ↔ server | `typing`           | `chatId` |
-| Client ↔ server | `stop typing`      | `chatId` |
+| Direction       | Event               | Payload                       |
+| ---------------- | ------------------- | ------------------------------ |
+| Server → client  | `connected`         | —                               |
+| Client → server  | `join chat`         | `chatId`, acked `{ joined }`    |
+| Server → client  | `message recieved`  | the persisted message           |
+| Server → client  | `added to chat`     | the chat you were just added to |
+| Client ↔ server  | `typing`            | `chatId` → `{ userId }`         |
+| Client ↔ server  | `stop typing`       | `chatId` → `{ userId }`         |
+| Server → client  | `presence:online`   | `{ userId }`                    |
+| Server → client  | `presence:offline`  | `{ userId }`                    |
+| Client → server  | `presence:list`     | `chatId`, acked `{ online: [userId] }` |
 
 > `message recieved` is misspelled in the wire protocol. It is kept as-is for
 > compatibility with the deployed client.
+>
+> Presence is tracked (a user's own room doubles as their online signal) but
+> not yet surfaced anywhere in the UI — the wire protocol is ready for an
+> online-status indicator, which just hasn't been built yet.
 
 ---
 
@@ -210,6 +224,10 @@ API and UI share an origin and no CORS configuration is required.
 - **Build command:** `npm install && npm run build`
 - **Start command:** `npm start`
 - Set `MONGO_URI`, `JWT_SECRET`, and `NODE_ENV=production` in the dashboard.
+- For attachments, also set `CLOUDINARY_CLOUD_NAME` (server) and both
+  `VITE_CLOUDINARY_CLOUD_NAME` / `VITE_CLOUDINARY_UPLOAD_PRESET` (client) —
+  the `VITE_*` ones are baked into the bundle at build time, so they must be
+  set *before* the build command runs, not just at start.
 
 ## License
 
