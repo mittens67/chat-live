@@ -1,27 +1,82 @@
+/** Shared across every Dialog/Sheet/AlertDialog body: the button variants. */
 .modal {
-    color: $color-accent;
-    &-btn {
-        background-color: $color-primary;
-        border: none;
-        font-weight: bold;
-        border: .1rem solid $color-secondary;
-        height: 2rem;
-        display: flex;
-        align-items: center;
-        &:hover {
-          background-color: $color-secondary;
-          color: $color-accent;
-          border: .1rem solid $color-primary;
-        }
+  &-btn {
+    background-color: var(--c-accent);
+    color: var(--c-on-accent);
+    border: 1px solid var(--c-accent);
+    font-weight: 500;
+    height: 2rem;
+    padding: 0 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+
+    &:hover:not(:disabled) {
+      background-color: var(--c-accent-hover);
+      color: var(--c-on-accent);
+      border-color: var(--c-accent-hover);
     }
 
-    &-title {
-      color: $color-primary;
-      font-weight: bold;
+    &:disabled {
+      opacity: 0.6;
     }
+  }
 
-    &-label {
-      color: $color-primary;
-      font-weight: bold;
+  &-btn--ghost {
+    background-color: transparent;
+    color: var(--c-text);
+    border-color: var(--c-border);
+
+    &:hover:not(:disabled) {
+      background-color: var(--c-raised);
+      color: var(--c-text);
+      border-color: var(--c-border);
     }
+  }
+
+  &-btn--danger {
+    background-color: var(--c-danger);
+    color: var(--c-on-danger);
+    border-color: var(--c-danger);
+
+    &:hover:not(:disabled) {
+      background-color: var(--c-danger);
+      color: var(--c-on-danger);
+      border-color: var(--c-danger);
+      opacity: 0.9;
+    }
+  }
+}
+
+/**
+ * A single icon, nothing else - the profile "eye" trigger, the group-edit
+ * pencil. `.modal-btn` used to double as this (a solid accent block sized by
+ * its `0 1rem` text padding), which is the right shape for "Create"/"Update"
+ * but reads as an oversized, oddly-proportioned rectangle around one 16px
+ * glyph. This is the same circular chip shape as the header's icon buttons,
+ * not a text-button variant, so it lives on its own rather than as a
+ * `.modal-btn--*` modifier.
+ */
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  height: 2.25rem;
+  width: 2.25rem;
+  border: none;
+  border-radius: 999px;
+  background-color: var(--c-raised);
+  color: var(--c-text);
+  transition: background-color 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background-color: var(--c-accent-subtle);
+    color: var(--c-accent);
+  }
+
+  &:active {
+    background-color: var(--c-border);
+  }
 }

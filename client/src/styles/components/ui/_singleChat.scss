@@ -1,102 +1,174 @@
 .singleChat {
+  //Fills its pane rather than measuring against the viewport. Was
+  //`height: 100dvh; max-height: calc(100dvh - 9rem)`, one of three
+  //hand-maintained offsets that desynced whenever the header changed.
+  display: flex;
+  flex-direction: column;
+  //flex:1 rather than height:100% - the parent is a flex column, and this way
+  //the height does not depend on the parent having resolved its own first
+  flex: 1;
+  min-height: 0;
+
+  //Shown when no chat is selected; should own the whole pane
   &-blank {
-    height: 100%;
+    flex: 1;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 0.5rem;
+    color: var(--c-border);
 
     & p {
-      font-size: 2rem;
-      //color: $color-primary;
+      font-size: var(--text-lg);
+      color: var(--c-muted);
+      margin: 0;
     }
   }
+
   &-header {
+    flex: none;
     display: flex;
     height: 3.5rem;
     justify-content: space-between;
     align-items: center;
+    gap: 0.75rem;
+    padding: 0 0.75rem;
+    border-bottom: 1px solid var(--c-border);
 
     & p {
-      font-size: 1.7rem;
-      //color: $color-primary;
-      font-weight: bold;
+      font-size: var(--text-lg);
+      color: var(--c-text);
+      font-weight: 600;
+      margin: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  &-headerInfo {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-width: 0;
+  }
+
+  &-avatar {
+    height: 2rem;
+    width: 2rem;
+    flex-shrink: 0;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  //Only rendered below md; merges what used to be a separate sibling row in
+  //ChatWindow.jsx into this header, instead of two stacked chrome bars
+  &-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    height: 2rem;
+    width: 2rem;
+    background: transparent;
+    border: none;
+    color: var(--c-text);
+    border-radius: 999px;
+
+    &:hover {
+      background-color: var(--c-raised);
     }
   }
 
   &-box {
+    //Takes the remaining height. min-height:0 is what allows the message list
+    //inside it to scroll instead of pushing the composer off-screen.
+    flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    padding: 3px;
-    //background-color: $color-tertiary;
-    //width: 100%;
-    height: 100vh;
-    max-height: calc(100vh - 9rem);
-    overflow-y: hidden;
-
-    -ms-overflow-style: none; /* Internet Explorer 10+ */
-      scrollbar-width: none; /* Firefox */
-      &::-webkit-scrollbar { 
-        display: none;  /* Safari and Chrome */
-    }
+    padding: 0.5rem;
+    background-color: var(--c-bg);
 
     &__messages {
+      flex: 1;
+      min-height: 0;
       overflow-y: auto;
-      -ms-overflow-style: none; /* Internet Explorer 10+ */
-      scrollbar-width: none; /* Firefox */
-      &::-webkit-scrollbar { 
-        display: none;  /* Safari and Chrome */
-    }
-    }
-  }
-}
-
-
-.theme-light {
-  .singleChat {
-    &-blank {
-      & p {
-        color: $color-primary;
-      }
-    }
-    &-header {
-      & p {
-        color: $color-primary;
-      }
-    }
-  
-    &-box {
-      background-color: $color-tertiary;
+      overscroll-behavior: contain;
+      //A thin themed scrollbar, rather than hiding it entirely and leaving
+      //no affordance that the region scrolls
+      scrollbar-width: thin;
+      scrollbar-color: var(--c-border) transparent;
     }
   }
 }
 
-.theme-dark {
-  .singleChat {
-    &-blank {
-      & p {
-        color: $color-secondary;
-      }
-    }
-    &-header {
-      & p {
-        color: $color-secondary;
-      }
-    }
-  
-    &-box {
-      background-color: $color-accentDark;
-    }
-  }
-   //Bootstrap class
-  .btn-outline-secondary {
-    background-color: $color-accentDark;
-    border-color: $color-secondary;
-    color: $color-secondary;
+//The message composer: one bordered pill holding the text input and its two
+//icon buttons, replacing Bootstrap's InputGroup.
+.composer {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  padding: 0.25rem 0.25rem 0.25rem 1rem;
+  border: 1px solid var(--c-border);
+  border-radius: 999px;
+  background-color: var(--c-surface);
+  box-shadow: var(--shadow-sm);
 
-    &:hover {
-      background-color: $color-secondary;
-      color: $color-accentDark;
+  &:focus-within {
+    border-color: var(--c-accent);
+  }
+}
+
+.composer-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--c-text);
+  font-size: var(--text-base);
+  font-family: inherit;
+
+  &::placeholder {
+    color: var(--c-muted);
+  }
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.composer-btn {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  height: 2.25rem;
+  width: 2.25rem;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--c-muted);
+
+  &:hover:not(:disabled) {
+    background-color: var(--c-accent-subtle);
+    color: var(--c-accent);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+  }
+
+  &--send {
+    background-color: var(--c-accent);
+    color: var(--c-on-accent);
+
+    &:hover:not(:disabled) {
+      background-color: var(--c-accent-hover);
+      color: var(--c-on-accent);
     }
   }
 }

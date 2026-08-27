@@ -1,94 +1,99 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import axios from "axios";
-
-import Form from "react-bootstrap/Form";
-import Button from "react-bootstrap/Button";
-import FloatingLabel from "react-bootstrap/FloatingLabel";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 import { ChatState } from "../../context/ChatProvider";
+import api, { errorMessage } from "../../lib/api";
 
-const Login = ({ toggleLogin }) => {
+const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState();
-  const { setUser } = ChatState();
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { login } = ChatState();
   const navigate = useNavigate();
 
-  const handleSubmit = async () => {
-    setLoading(true);
+  //Takes the event and prevents the default submit. Without this the browser
+  //navigated away mid-request and the login was aborted.
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
     if (!email || !password) {
-      toast.error("Please Fill All the Fields");
-      setLoading(false);
+      toast.error("Please fill all the fields");
       return;
     }
 
+    setLoading(true);
+
     try {
-      const config = {
-        headers: {
-          "Content-type": "application/json",
-        },
-      };
-
-      const { data } = await axios.post(
-        "/api/user/login",
-        { email, password },
-        config
-      );
-
-      toast.success("Login Successful!");
-      //setUser(data);
-      //console.log(data);
-      localStorage.setItem("userInfo", JSON.stringify(data));
-      setUser(data);
-      setLoading(false);
+      const { data } = await api.post("/user/login", { email, password });
+      login(data);
+      toast.success("Login successful!");
       navigate("/chats");
     } catch (error) {
-      toast.error("Invalid Credentials! Please try again.");
-      //console.log(error);
+      toast.error(errorMessage(error, "Invalid credentials, please try again"));
+    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Form className="d-grid gap-2">
-      <h1 className="auth-form__title">Login</h1>
+    <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+      <label className="field">
+        <span className="field-label">Email Address</span>
+        <div className="field-input-wrap">
+          <span className="field-icon">
+            <Mail size={16} aria-hidden="true" />
+          </span>
+          <input
+            id="email"
+            required
+            type="email"
+            autoComplete="username"
+            placeholder="Enter your email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="field-input field-input--icon"
+          />
+        </div>
+      </label>
 
-      <FloatingLabel controlId="email" label="Email Address*" className="mb-3">
-        <Form.Control
-          required
-          type="email"
-          placeholder="Enter your email address"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-      </FloatingLabel>
-      <FloatingLabel controlId="password" label="Password*" className="mb-3">
-        <Form.Control
-          required
-          type="password"
-          placeholder="Enter your password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-      </FloatingLabel>
+      <label className="field">
+        <span className="field-label">Password</span>
+        <div className="field-input-wrap">
+          <span className="field-icon">
+            <Lock size={16} aria-hidden="true" />
+          </span>
+          <input
+            id="password"
+            required
+            type={showPassword ? "text" : "password"}
+            autoComplete="current-password"
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="field-input field-input--icon field-input--toggle"
+          />
+          <button
+            type="button"
+            className="field-toggle"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            onClick={() => setShowPassword((prev) => !prev)}
+          >
+            {showPassword ? (
+              <EyeOff size={16} aria-hidden="true" />
+            ) : (
+              <Eye size={16} aria-hidden="true" />
+            )}
+          </button>
+        </div>
+      </label>
 
-      <Button
-        className="auth-btn"
-        type="submit"
-        disabled={loading}
-        onClick={!loading ? handleSubmit : null}
-      >
-        {loading ? "Loading" : "Login"}
-      </Button>
-      <p style={{ textAlign: "center" }} className="mt-4">
-        ( Don&apos;t have an account yet? )
-      </p>
-      <Button className="auth-link" variant="link" onClick={toggleLogin}>
-        Create an Account
-      </Button>
-    </Form>
+      <button className="auth-btn" type="submit" disabled={loading}>
+        {loading ? "Logging in…" : "Login"}
+      </button>
+    </form>
   );
 };
 

@@ -1,10 +1,9 @@
-import Spinner from "react-bootstrap/Spinner";
-
 const Loading = () => {
   return (
-    <Spinner animation="border" role="status">
-      <span className="visually-hidden">Loading...</span>
-    </Spinner>
+    <div className="flex items-center justify-center p-4" role="status">
+      <span className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-accent" />
+      <span className="sr-only">Loading...</span>
+    </div>
   );
 };
 

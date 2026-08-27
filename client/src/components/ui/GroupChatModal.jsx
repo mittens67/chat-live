@@ -1,126 +1,111 @@
 import { useState } from "react";
-import Button from "react-bootstrap/Button";
-import Modal from "react-bootstrap/Modal";
-import Container from "react-bootstrap/Container";
-import Row from "react-bootstrap/Row";
-import axios from "axios";
-import toast from 'react-hot-toast';
+import toast from "react-hot-toast";
 
-import Form from "react-bootstrap/Form";
-import FloatingLabel from "react-bootstrap/FloatingLabel";
 import { ChatState } from "../../context/ChatProvider";
 import Loading from "./Loading";
 import UserListItem from "./UserListItem";
 import UserBadgeItem from "./UserBadgeItem";
-//import "../../styles/components/ui/groupChatModal.scss"; 
+import api, { errorMessage } from "../../lib/api";
+import { useUserSearch } from "../../lib/useUserSearch";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "./primitives/Dialog";
 
 const GroupChatModal = ({ children }) => {
-  const [show, setShow] = useState(false);
-  const [groupChatName, setGroupChatName] = useState();
+  const [open, setOpen] = useState(false);
+  const [groupChatName, setGroupChatName] = useState("");
   const [selectedUsers, setSelectedUsers] = useState([]);
-  const [search, setSearch] = useState("");
-  const [searchResult, setSearchResult] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const { user, chats, setChats, darkTheme } = ChatState();
-
-  const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
+  const { chats, setChats, openChat } = ChatState();
+  const { query, setQuery, results, loading, reset } = useUserSearch();
 
   const handleGroup = (userToAdd) => {
-    if (selectedUsers.includes(userToAdd)) {
-      toast.error("User Already Exists");
+    if (selectedUsers.some((u) => u._id === userToAdd._id)) {
+      toast.error("That user is already added");
       return;
     }
-
-    setSelectedUsers([...selectedUsers, userToAdd]);
-  };
-
-  const handleSearch = async (query) => {
-    setSearch(query);
-    if (!query) {
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const config = {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
-      };
-      const { data } = await axios.get(`/api/user?search=${search}`, config);
-      setLoading(false);
-      setSearchResult(data);
-    } catch (error) {
-      toast.error("GSomething went wrong");
-      console.log(error);
-      setLoading(false);
-    }
+    setSelectedUsers((prev) => [...prev, userToAdd]);
   };
 
   const handleDelete = (delUser) => {
-    setSelectedUsers(selectedUsers.filter((sel) => sel._id !== delUser._id));
+    setSelectedUsers((prev) => prev.filter((sel) => sel._id !== delUser._id));
   };
 
   const handleSubmit = async () => {
-    if (!groupChatName || !selectedUsers) {
-      toast.error("Please fill fields");
+    //An empty array is truthy, so the old `!selectedUsers` check never caught
+    //a group with no members
+    if (!groupChatName.trim() || selectedUsers.length < 2) {
+      toast.error("Enter a name and pick at least 2 people");
       return;
     }
 
+    setSubmitting(true);
+
     try {
-      const config = {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
-      };
-      const { data } = await axios.post(
-        `/api/chat/group`,
-        {
-          name: groupChatName,
-          users: JSON.stringify(selectedUsers.map((u) => u._id)),
-        },
-        config
-      );
-      setChats([data, ...chats]);
-      handleClose();
-      toast.success("Group Created!");
-      setGroupChatName();
+      const { data } = await api.post("/chat/group", {
+        name: groupChatName.trim(),
+        users: selectedUsers.map((u) => u._id),
+      });
+      setChats([data, ...(chats ?? [])]);
+      //Switches into the new group immediately, rather than leaving whatever
+      //chat was open before still showing while the group merely appears in
+      //the list - the previous code never called this, so "Group created!"
+      //was the only feedback that anything had happened
+      openChat(data);
+      setOpen(false);
+      toast.success("Group created!");
+      setGroupChatName("");
       setSelectedUsers([]);
+      reset();
     } catch (error) {
-      toast.error("Group Could Not Be Created");
+      toast.error(errorMessage(error, "Group could not be created"));
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <>
-      <span onClick={handleShow}>{children}</span>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
 
-      <Modal show={show} centered onHide={handleClose} data-bs-theme={darkTheme? 'dark': ''}>
-        <Modal.Header closeButton className="border-0 text-center">
-          <Modal.Title className="w-100 groupModal-title">Create Group Chat</Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="text-center w-100">
-          <FloatingLabel controlId="name" label="Chat Name*" className="mb-3">
-            <Form.Control
-              required
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create Group Chat</DialogTitle>
+        </DialogHeader>
+
+        <div className="flex flex-col gap-3 text-left">
+          <label className="field">
+            <span className="field-label">Chat Name</span>
+            <input
               type="text"
+              required
               placeholder="Enter chat name"
               value={groupChatName}
               onChange={(e) => setGroupChatName(e.target.value)}
+              className="field-input"
             />
-          </FloatingLabel>
-          <FloatingLabel controlId="users" label="Add Users*" className="mb-3">
-            <Form.Control
-              required
+          </label>
+
+          <label className="field">
+            <span className="field-label">Add Users</span>
+            <input
               type="text"
-              placeholder="Add users. Ex: Jon Doe, Jane Doe"
-              onChange={(e) => handleSearch(e.target.value)}
+              required
+              placeholder="Search by name or email"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="field-input"
             />
-          </FloatingLabel>
-          <Container>
-            <Row className="d-flex flex-wrap">
+          </label>
+
+          {selectedUsers.length > 0 && (
+            <div className="flex flex-wrap">
               {selectedUsers.map((u) => (
                 <UserBadgeItem
                   key={u._id}
@@ -128,27 +113,36 @@ const GroupChatModal = ({ children }) => {
                   handler={() => handleDelete(u)}
                 />
               ))}
-            </Row>
-          </Container>
+            </div>
+          )}
+
           {loading ? (
             <Loading />
           ) : (
-            searchResult
-              ?.slice(0, 4)
-              .map((user) => (
+            <div className="max-h-48 overflow-y-auto mask-[linear-gradient(to_bottom,transparent,black_12px,black_calc(100%-12px),transparent)]">
+              {results?.slice(0, 4).map((result) => (
                 <UserListItem
-                  user={user}
-                  handler={() => handleGroup(user)}
-                  key={user._id}
+                  user={result}
+                  handler={() => handleGroup(result)}
+                  key={result._id}
                 />
-              ))
+              ))}
+            </div>
           )}
-        </Modal.Body>
-        <Modal.Footer className="border-0">
-          <Button className="groupModal-btn" onClick={handleSubmit}>Create</Button>
-        </Modal.Footer>
-      </Modal>
-    </>
+        </div>
+
+        <DialogFooter>
+          <button
+            type="button"
+            className="modal-btn"
+            onClick={handleSubmit}
+            disabled={submitting}
+          >
+            {submitting ? "Creating…" : "Create"}
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

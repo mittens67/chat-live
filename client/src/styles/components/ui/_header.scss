@@ -1,29 +1,118 @@
+/**
+ * Theme-agnostic: the tokens already change with data-theme, so the duplicated
+ * .theme-light / .theme-dark blocks that used to be here are gone.
+ */
+
 .header {
+  &-nav {
+    background-color: var(--c-surface);
+    border-bottom: 1px solid var(--c-border);
+    box-shadow: var(--elevation-sm);
+    position: relative;
+    z-index: 10;
+  }
+
   &-brand {
-    font-size: 2rem;
-    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: var(--text-lg);
+    font-weight: 700;
+    color: var(--c-text);
+    letter-spacing: -0.01em;
+  }
+
+  &-mark {
+    display: grid;
+    place-items: center;
+    height: 1.75rem;
+    width: 1.75rem;
+    flex-shrink: 0;
+    border-radius: var(--radius-sm);
+    background-color: var(--c-accent);
+    color: var(--c-on-accent);
   }
 
   &-btn {
     text-decoration: none;
     display: flex;
     align-items: center;
+    background: transparent;
+    border: none;
+    color: var(--c-text);
+    border-radius: 999px;
+    padding: 0.5rem 0.75rem;
+    font: inherit;
+    transition: background-color 0.15s ease, color 0.15s ease;
+
+    &:hover {
+      background-color: var(--c-raised);
+      color: var(--c-accent);
+    }
+
+    &:active {
+      background-color: var(--c-border);
+    }
 
     &__text {
-      margin-left: 2px;
+      margin-left: 0.375rem;
     }
   }
 
   &-container {
     display: flex;
+    align-items: center;
+    gap: 0.375rem;
   }
 
-}
+  &-dropdown {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 2.25rem;
+    width: 2.25rem;
+    background: transparent;
+    border: none;
+    color: var(--c-text);
+    border-radius: 999px;
+    transition: background-color 0.15s ease, color 0.15s ease;
 
-//This is overwriting Bootstrap CSS so dropdown does not overflow. See if there is a better way to do this later
-.dropdown-menu {
-  right: 0 !important;
-  left: auto !important;
+    &:hover {
+      background-color: var(--c-raised);
+      color: var(--c-accent);
+    }
+
+    &:active {
+      background-color: var(--c-border);
+    }
+  }
+
+  //Only rendered when notification.length > 0 (see Header.jsx) - it used to
+  //render unconditionally showing "0", which read as a bug rather than an
+  //empty inbox.
+  &-badge {
+    position: absolute;
+    top: 0.125rem;
+    right: 0.125rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.125rem;
+    height: 1.125rem;
+    padding: 0 0.25rem;
+    border-radius: 999px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1;
+    border: 2px solid var(--c-surface);
+
+    //Reads the underlying --c-danger custom property directly - --color-error
+    //only exists as a Tailwind theme key that generates utility classes, not
+    //a real variable.
+    background-color: var(--c-danger);
+    color: var(--c-on-danger);
+  }
 }
 
 .avatar {
@@ -31,102 +120,33 @@
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 0 2px var(--c-border);
+  transition: box-shadow 0.15s ease;
+}
+
+.header-dropdown:hover .avatar {
+  box-shadow: 0 0 0 2px var(--c-accent-subtle);
 }
 
 @media screen and (max-width: 576px) {
   .header {
     &-btn {
+      padding: 0.5rem;
+
       &__text {
         display: none;
       }
     }
 
-    &-brand {
-      font-size: 1.5rem;
-      font-weight: semibold;
+    &-mark {
+      height: 1.5rem;
+      width: 1.5rem;
     }
   }
 
   .avatar {
-    width: 1.5rem;
-    height: 1.5rem;
+    width: 1.75rem;
+    height: 1.75rem;
   }
 }
-
-
-/** lIght theme **/
-
-.theme-light {
-    .header {
-      &-nav {
-        background-color: $color-white;
-        border-bottom: 0.1rem solid $color-black;
-      }
-      &-brand {
-        color: $color-primary;
-      }
-      &-btn {
-        color: $color-primary;
-    
-        &:hover {
-          color: $color-black;
-        }
-      }
-      &-dropdown {
-        color: $color-primary;
-      }
-      &-badge {
-        background-color: $color-primary;
-      }
-    }
-    .avatar {
-      border: 0.05rem solid $color-primary;
-    }
-}
-
-
-/**Dark theme**/
-
-.theme-dark {
-  .header {
-    &-nav {
-      background-color: $color-black;
-      border-bottom: 0.1rem solid $color-accent;
-    }
-    &-brand {
-      color: $color-primary;
-    }
-    &-btn {
-      color: $color-primary;
-  
-      &:hover {
-        color: $color-white;
-      }
-    }
-    &-dropdown {
-      color: $color-primary;
-    }
-    &-badge {
-      background-color: $color-primary;
-    }
-  }
-  .avatar {
-    border: 0.05rem solid $color-primary;
-  }
-
-  //These are Bootstrap classes, change needed only in dark mode
-  .dropdown-menu {
-    background-color: $color-black;
-    color: $color-white;
-    outline: .05rem solid $color-white
-  }
-
-  .dropdown-item {
-    color: $color-white;
-    &:hover {
-      background-color: $color-accent;
-    }
-  }
-}
-
-

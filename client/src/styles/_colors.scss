@@ -1,10 +1,34 @@
-$color-black: #000;
-$color-white: #fff;
-$color-primary: #708871;
-$color-secondary: #bec6a0;
-$color-tertiary: #fef3e2;
-$color-accent: #606676;
-$color-accentDark: #2c303a;
+/**
+ * Bridge from the old palette to the design tokens.
+ *
+ * These names are kept only so the not-yet-migrated partials keep compiling.
+ * Each now resolves to a CSS custom property defined in styles/tailwind.css,
+ * which means every existing component picks up the new palette and follows
+ * the theme automatically - without waiting to be rewritten.
+ *
+ * Do not add new uses. New styles should reference the tokens directly, or
+ * use Tailwind utilities (bg-surface, text-muted, ...).
+ *
+ * Safe because nothing in this codebase passes these through a Sass colour
+ * function - darken()/lighten()/mix() cannot operate on a var().
+ */
 
+/* Sage brand: text on light surfaces, button fills, borders */
+$color-primary: var(--c-accent);
 
+/* Was pale olive: secondary fills, hover states and borders */
+$color-secondary: var(--c-accent-subtle);
 
+/* Was cream: the raised surface behind rows and cards */
+$color-tertiary: var(--c-raised);
+
+/* Was slate, used almost exclusively as a text colour */
+$color-accent: var(--c-text);
+
+/* Was near-black slate, used as a dark fill */
+$color-accentDark: var(--c-raised);
+
+/* Literal black/white, which is exactly what broke contrast before.
+   Both now resolve to something legible in either theme. */
+$color-black: var(--c-text);
+$color-white: var(--c-on-accent);

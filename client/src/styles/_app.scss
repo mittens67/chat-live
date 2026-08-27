@@ -1,19 +1,12 @@
+/**
+ * The app shell is a CSS grid defined in ChatPage.jsx now, and the background
+ * comes from the --c-bg token.
+ *
+ * What used to be here: a full-bleed radial gradient (cream to olive in light,
+ * lime to grey in dark - the dark one was lighter than the light one), with
+ * the chat panes painted pure black or white on top of it via inline styles.
+ */
+
 .app {
-    min-height: 100vh;
-    display: flex;
-}
-
-
-.theme-light {
-    &.app {
-        background: rgb(254,243,226);
-        background: radial-gradient(circle, rgba(254,243,226,1) 0%, rgba(142,167,49,1) 100%);  
-    }
-}
-
-.theme-dark {
-    &.app {
-        background: rgb(181,232,113);
-        background: radial-gradient(circle, rgba(181,232,113,1) 0%, rgba(125,130,118,1) 100%); 
-    }
+  min-height: 100dvh;
 }

@@ -1,29 +1,28 @@
-.list {
-    &-item {
-        cursor: pointer;
-        background-color: $color-tertiary;
-        margin: .5rem 0;
-        height: 5rem;
-        align-items: center;
-        padding: .5rem;
+.list-item {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    background-color: transparent;
+    border: none;
+    border-bottom: 1px solid var(--c-border);
+    padding: 0.625rem;
+    text-align: left;
+    transition: background-color 0.15s ease;
 
-        &:hover {
-            background-color: $color-secondary;
-        }
+    &:last-child {
+        border-bottom: none;
     }
 
-    &-info {
-        display: flex;
-        flex-direction: column;
+    &:hover {
+        background-color: var(--c-raised);
+    }
 
-        &__name {
-            color: $color-primary;
-            font-weight: bold;
-        }
-
-        &__email {
-            font-weight: lighter;
-            color: $color-black;
-        }
+    //Positive offset, unlike the global :focus-visible rule: these rows pack
+    //tightly, so an outline drawn outside the box would overlap its neighbour
+    &:focus-visible {
+        outline: 2px solid var(--c-ring);
+        outline-offset: -2px;
     }
 }

@@ -1,4 +1,33 @@
+# Dependencies
 /node_modules
 /client/node_modules
+
+# Environment — never commit real secrets. .env.example is the tracked template.
 .env
-TBD.txt
+.env.*
+!.env.example
+
+# Build output
+/dist
+/build
+/client/dist
+
+# Logs
+*.log
+npm-debug.log*
+logs/
+
+# Test coverage
+coverage/
+
+# Local planning / progress notes — working documents, not part of the project
+PROGRESS.md
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

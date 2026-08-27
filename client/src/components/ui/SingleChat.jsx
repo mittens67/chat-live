@@ -1,231 +1,269 @@
-import { useEffect, useRef, useState } from "react";
-import axios from "axios";
-import Lottie from "react-lottie";
+import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import ping from '../../assets/ping.mp3';
-
-import InputGroup from "react-bootstrap/InputGroup";
-import DropdownButton from "react-bootstrap/DropdownButton";
-import Dropdown from "react-bootstrap/Dropdown";
-import Form from "react-bootstrap/Form";
+import {
+  Paperclip,
+  Send,
+  ArrowLeft,
+  MessagesSquare,
+  FileText,
+  Image as ImageIcon,
+  Video,
+} from "lucide-react";
 
 import ProfileModal from "./ProfileModal";
-import { getSender, getSenderFull } from "../../config/chatLogic";
-import animationData from "../../animations/typing.json";
+import EmojiPickerButton from "./EmojiPickerButton";
+import {
+  getSender,
+  getSenderFull,
+  insertMessageInOrder,
+} from "../../config/chatLogic";
 
 import { ChatState } from "../../context/ChatProvider";
+import { useSocket } from "../../context/SocketProvider";
 import UpdateGroupChatModal from "./UpdateGroupChatModal";
 import ScrollableChat from "./ScrollableChat";
+import TypingIndicator from "./TypingIndicator";
 
 import Loading from "./Loading";
-import io from "socket.io-client";
-import { FaPaperclip } from "react-icons/fa";
 import FileUploadModal from "./FileUploadModal";
+import api, { errorMessage } from "../../lib/api";
+import { DEFAULT_AVATAR, GROUP_AVATAR, onAvatarError } from "../../lib/defaultAvatar";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "./primitives/DropdownMenu";
 
-//const ENDPOINT = "http://localhost:3000"; //dev
-const ENDPOINT = "https://chat-live-qziv.onrender.com/"; //prod
-let socket, selectedChatCompare = null;
+const TYPING_TIMEOUT = 3000;
 
-const SingleChat = ({ fetchAgain, setFetchAgain }) => {
+const SingleChat = ({ setFetchAgain, onBack }) => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [newMessage, setNewMessage] = useState("");
-  const [socketConnected, setSocketConnected] = useState(false);
-  const [typing, setTyping] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
-  const messageRef = useRef(messages);
-  
+  //Which upload dialog is open, if any. One shared FileUploadModal instance
+  //parameterized by kind, rather than two - it is opened from inside the
+  //attachment DropdownMenu, and a Dialog trigger nested inside an open
+  //dropdown is the one Radix combination that reliably fights over focus, so
+  //this drives the dialog's `open` state directly instead.
+  const [uploadKind, setUploadKind] = useState(null);
 
-  const { selectedChat, user, notification, setNotification } = ChatState();
+  const { selectedChat, user, setNotification } = ChatState();
+  const { socket, connected } = useSocket();
 
-  const defaultOptions = {
-    loop: true,
-    autoplay: true,
-    animationData: animationData,
-    rendererSettings: {
-      preserveAspectRatio: "xMidYMid slice",
-    },
-  };
+  //Mirrors selectedChat for use inside socket callbacks without making the
+  //listener depend on it (and therefore re-subscribe on every chat switch)
+  const selectedChatRef = useRef(selectedChat);
+  const typingRef = useRef(false);
+  const typingTimerRef = useRef(null);
+  const audioRef = useRef(null);
+  //Chains this chat's own outgoing sends so only one is ever in flight.
+  //sendMessage on the server does several sequential DB round trips
+  //(Message.create, three populate() calls, a Chat update), so two sends
+  //fired close together could both still be in flight at once - and their
+  //writes could then land in either order, showing your own messages out of
+  //the order you sent them in. Queuing removes that window entirely.
+  const sendQueueRef = useRef(Promise.resolve());
 
-  const fileSendHandler = (data) => {
-    socket.emit("new message", data);
-    setMessages([...messages, data]);
-  }
+  useEffect(() => {
+    selectedChatRef.current = selectedChat;
+  }, [selectedChat]);
 
-  const fetchMessages = async () => {
-    if (!selectedChat) return;
+  //Bumping this re-runs the fetch below; it is what UpdateGroupChatModal calls
+  //after changing membership.
+  const [refetchToken, setRefetchToken] = useState(0);
+  const fetchMessages = useCallback(() => setRefetchToken((n) => n + 1), []);
 
-    try {
-      const config = {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
-      };
+  const chatId = selectedChat?._id;
 
-      setLoading(true);
-
-      const { data } = await axios.get(
-        `/api/message/${selectedChat._id}`,
-        config
-      );
-
-      //console.log('Fetching along the flow, this can overwrite');
-      setMessages(data);
-      setLoading(false);
-
-      socket.emit("join chat", selectedChat._id);
-    } catch (error) {
-      toast.error("Something Went Wrong with fetching chats");
-      setLoading(false);
+  useEffect(() => {
+    if (!chatId) {
+      setMessages([]);
+      return undefined;
     }
-  };
 
-  const sendMessage = async (e) => {
-    if (e.key === "Enter" && newMessage) {
-      socket.emit("stop typing", selectedChat._id);
+    //Aborting on cleanup means a slow response for chat A can never land after
+    //the user has switched to chat B and overwrite B's messages
+    const controller = new AbortController();
+
+    setLoading(true);
+    setMessages([]);
+
+    (async () => {
       try {
-        const config = {
-          headers: {
-            "Content-type": "application/json",
-            Authorization: `Bearer ${user.token}`,
-          },
-        };
-        setNewMessage(""); // This is async, so we should be good with sending post
-
-        const { data } = await axios.post(
-          "/api/message",
-          {
-            content: newMessage,
-            chatId: selectedChat._id,
-          },
-          config
-        );
-        //console.log(`Data we send through socket io - ${data}`);
-        //console.log('sending message');
-        socket.emit("new message", data);
-        setMessages([...messages, data]);
+        const { data } = await api.get(`/message/${chatId}`, {
+          signal: controller.signal,
+        });
+        setMessages(data);
+        socket?.emit("join chat", chatId);
       } catch (error) {
-        toast.error("Something went wrong with sending message");
+        if (!controller.signal.aborted) {
+          toast.error(errorMessage(error, "Could not load messages"));
+        }
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
       }
+    })();
+
+    return () => controller.abort();
+  }, [chatId, socket, refetchToken]);
+
+  //Incoming messages. Functional updates mean this listener never needs to see
+  //current state, so it can subscribe once and stay correct - the old version
+  //closed over first-render state and needed a ref mirror to work around it.
+  useEffect(() => {
+    if (!socket) return undefined;
+
+    const handleMessage = (incoming) => {
+      const open = selectedChatRef.current;
+
+      if (!open || open._id !== incoming.chat._id) {
+        setNotification((prev) =>
+          //Compare by id: the socket payload is freshly deserialized, so
+          //reference equality is always false and duplicates slipped through
+          prev.some((n) => n._id === incoming._id) ? prev : [incoming, ...prev]
+        );
+        setFetchAgain((prev) => !prev);
+      } else {
+        setMessages((prev) => insertMessageInOrder(prev, incoming));
+      }
+
+      if (!audioRef.current) {
+        audioRef.current = new Audio("/ping.mp3");
+      }
+      //Autoplay is blocked until the user has interacted with the page; that
+      //rejection is expected and must not surface as an unhandled rejection
+      audioRef.current.play().catch(() => {});
+    };
+
+    const handleTyping = () => setIsTyping(true);
+    const handleStopTyping = () => setIsTyping(false);
+
+    socket.on("message recieved", handleMessage);
+    socket.on("typing", handleTyping);
+    socket.on("stop typing", handleStopTyping);
+
+    return () => {
+      //Named handlers, so these actually remove the listeners. Passing a fresh
+      //arrow function to .off() removed nothing.
+      socket.off("message recieved", handleMessage);
+      socket.off("typing", handleTyping);
+      socket.off("stop typing", handleStopTyping);
+    };
+  }, [socket, setNotification, setFetchAgain]);
+
+  useEffect(() => () => clearTimeout(typingTimerRef.current), []);
+
+  const stopTyping = useCallback(() => {
+    clearTimeout(typingTimerRef.current);
+    if (typingRef.current && selectedChatRef.current) {
+      typingRef.current = false;
+      socket?.emit("stop typing", selectedChatRef.current._id);
+    }
+  }, [socket]);
+
+  //Only adds it locally. The server fans the message out to everyone else when
+  //it persists it, so the client no longer emits its own copy - what recipients
+  //saw used to be whatever this browser claimed rather than what was stored.
+  const appendOwnMessage = (data) => {
+    setMessages((prev) => insertMessageInOrder(prev, data));
+    //Refetches the chat list so its own preview/timestamp update too. Without
+    //this, sending a message only updated the open conversation - the sender's
+    //own row in the list kept showing the old "latestMessage" until something
+    //else happened to trigger a refetch (e.g. the recipient replying).
+    setFetchAgain((prev) => !prev);
+  };
+
+  const submitMessage = () => {
+    const content = newMessage.trim();
+    if (!content || !selectedChat) return;
+
+    stopTyping();
+    setNewMessage("");
+    const chatId = selectedChat._id;
+
+    //Chained onto the previous send rather than fired immediately: this is
+    //what keeps two quick sends from ever being in flight at the same time.
+    //The user can keep typing right away - only the request to the server is
+    //serialized, not the input.
+    sendQueueRef.current = sendQueueRef.current
+      .then(() => api.post("/message", { content, chatId }))
+      .then(({ data }) => appendOwnMessage(data))
+      .catch((error) => {
+        setNewMessage((current) => current || content);
+        toast.error(errorMessage(error, "Could not send message"));
+      });
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      submitMessage();
     }
   };
+
   const typingHandler = (e) => {
     setNewMessage(e.target.value);
 
-    /*Type Indicator */
-    //console.log("Before connected socket");
-    if (!socketConnected) return;
-    if (!typing) {
-      //console.log("Sending typing to other side");
-      setTyping(true);
-      socket.emit("typing", selectedChat._id);
-    }
-    let lastTypingTime = new Date().getTime();
-    let timerLength = 3000;
-    setTimeout(() => {
-      let timeNow = new Date().getTime();
-      let timeDiff = timeNow - lastTypingTime;
+    if (!connected || !selectedChat) return;
 
-      if (timeDiff >= timerLength && typing) {
-        //console.log("Sending stop typing to other side");
-        socket.emit("stop typing", selectedChat._id);
-        setTyping(false);
-      }
-    }, timerLength);
+    if (!typingRef.current) {
+      typingRef.current = true;
+      socket?.emit("typing", selectedChat._id);
+    }
+
+    //A single rolling timer. The old version started a new timeout on every
+    //keystroke and compared against a timestamp defined in the same tick, so
+    //the throttle never fired and the indicator stuck on.
+    clearTimeout(typingTimerRef.current);
+    typingTimerRef.current = setTimeout(stopTyping, TYPING_TIMEOUT);
   };
 
-  useEffect(() => {
-    socket = io(ENDPOINT, {
-      withCredentials: false,
-    });
-    socket.emit("setup", user);
-    socket.on("connected", () => {
-      setSocketConnected(true)
-    });
-    socket.on("typing", () => setIsTyping(true));
-    socket.on("stop typing", () => setIsTyping(false));
-
-    return () => {
-      //Stop listening to these events as part of cleanup
-      socket.off('connected', () => {
-        setSocketConnected(false);
-      });
-      socket.off('typing');
-      socket.off('stop typing');
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchMessages();
-    selectedChatCompare = selectedChat; // selectedChat is not directly accessible so this way to access inside .on callback
-  }, [selectedChat]);
-
-  useEffect(() => {
-    /*The below use effect ends up resetting the messages state everytime we get a new message. We are
-     * using a ref to overcome this issue*/
-    messageRef.current = messages;
-  });
-
-  useEffect(() => {
-    const audio = new Audio(ping);    
-    socket?.on("message recieved", (newMessageRecieved) => {
-      
-      //console.log('on msg recieved');
-      //console.log(selectedChatCompare?._id, newMessageRecieved._id);
-
-      if (
-        !selectedChatCompare ||
-        selectedChatCompare._id !== newMessageRecieved.chat._id
-      ) {
-        // If there is no selectedChat or the current selected chat is not the one we got message from
-
-        if (!notification.includes(newMessageRecieved)) {
-          setNotification([newMessageRecieved, ...notification]);
-          setFetchAgain(!fetchAgain);
-          //console.log("doing a fetch again here");
-        }
-      } else {
-        /**
-         * Directly using the messages state here end up resetting the state with each event recieved.
-         * This seems to be the behavior when we use useEffect, socket.on and state updation together.
-         * So the chat history gets erased from messages and does not show up on screen.
-         * TO overcome this, we are using a useRef to track the current messages state with every render in the 
-         * useEffect right above this one. 
-         * And here, instead of accessing messages directly, we will use the ref value instead.
-         * This seems to solve this issue.
-         */
-        setMessages([...messageRef.current, newMessageRecieved]); // This way the messages state does not reset everytimre.
-      }
-      //Play notification sound
-      audio.play();
-    });
-
-    return () => {
-      socket.off("message recieved");
-    }
-  },[]);
+  const backButton = onBack && (
+    <button
+      type="button"
+      title="Go back to chat list"
+      onClick={onBack}
+      className="singleChat-back md:hidden"
+    >
+      <ArrowLeft size={18} aria-hidden="true" />
+      <span className="sr-only">Go back to chat list</span>
+    </button>
+  );
 
   return (
-    <div style={{ height: "100%" }}>
+    <div className="singleChat">
       {!selectedChat ? (
         <div className="singleChat-blank">
+          <MessagesSquare size={40} aria-hidden="true" />
           <p>Click on a user to start chatting</p>
         </div>
       ) : (
         <>
           {!selectedChat.isGroupChat ? (
-            <>
-              <div className="singleChat-header">
+            <div className="singleChat-header">
+              <div className="singleChat-headerInfo">
+                {backButton}
+                <img
+                  src={getSenderFull(user, selectedChat.users)?.picture || DEFAULT_AVATAR}
+                  onError={onAvatarError}
+                  alt=""
+                  className="singleChat-avatar"
+                />
                 <p>{getSender(user, selectedChat.users)}</p>
-                <ProfileModal user={getSenderFull(user, selectedChat.users)} />
               </div>
-            </>
+              <ProfileModal user={getSenderFull(user, selectedChat.users)} />
+            </div>
           ) : (
             <div className="singleChat-header">
-              <p>{selectedChat.chatName.toUpperCase()}</p>
+              <div className="singleChat-headerInfo">
+                {backButton}
+                <img src={GROUP_AVATAR} alt="" className="singleChat-avatar" />
+                <p>{selectedChat.chatName?.toUpperCase()}</p>
+              </div>
               <UpdateGroupChatModal
                 fetchMessages={fetchMessages}
-                fetchAgain={fetchAgain}
                 setFetchAgain={setFetchAgain}
               />
             </div>
@@ -235,44 +273,80 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
               <Loading />
             ) : (
               <div className="singleChat-box__messages">
-                <ScrollableChat messages={messages} />
-              </div>
-            )}
-            {isTyping ? (
-              <div>
-                <Lottie
-                  options={defaultOptions}
-                  height={25}
-                  width={150}
-                  style={{ marginBottom: 5, marginLeft: 0 }}
+                <ScrollableChat
+                  messages={messages}
+                  isGroupChat={selectedChat.isGroupChat}
                 />
               </div>
-            ) : null}
-            <InputGroup>
-              <Form.Control
+            )}
+            {isTyping ? <TypingIndicator /> : null}
+
+            <div className="composer">
+              <input
                 placeholder="Enter a message"
-                aria-label="Recipient's username with two button addons"
-                onKeyDown={(e) => sendMessage(e)}
+                aria-label="Message"
+                onKeyDown={handleKeyDown}
                 onChange={typingHandler}
-                required
                 value={newMessage}
+                className="composer-input"
               />
-              <DropdownButton
-                variant="outline-secondary"
-                title={<FaPaperclip />}
-                id="input-group-dropdown-2"
-                align="end"
+
+              <EmojiPickerButton
+                onSelect={(emoji) => setNewMessage((prev) => prev + emoji)}
+              />
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="composer-btn"
+                    aria-label="Attach a file"
+                  >
+                    <Paperclip size={16} aria-hidden="true" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem
+                    onSelect={() => setUploadKind("file")}
+                    className="flex items-center gap-2"
+                  >
+                    <FileText size={15} aria-hidden="true" className="shrink-0 text-subtle" />
+                    Upload File
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => setUploadKind("image")}
+                    className="flex items-center gap-2"
+                  >
+                    <ImageIcon size={15} aria-hidden="true" className="shrink-0 text-subtle" />
+                    Upload Image
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => setUploadKind("video")}
+                    className="flex items-center gap-2"
+                  >
+                    <Video size={15} aria-hidden="true" className="shrink-0 text-subtle" />
+                    Upload Video
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <button
+                type="button"
+                onClick={submitMessage}
+                disabled={!newMessage.trim()}
+                aria-label="Send message"
+                className="composer-btn composer-btn--send"
               >
-                <FileUploadModal title="File" handler={fileSendHandler}>
-                <Dropdown.Item>Upload File</Dropdown.Item>
-                </FileUploadModal>
-                <Dropdown.Divider />
-                <FileUploadModal title="Image" handler={fileSendHandler}>
-                  <Dropdown.Item>Upload Image</Dropdown.Item>
-                </FileUploadModal>
-              </DropdownButton>
-              {/* <Button variant="outline-secondary">Send Attachment</Button> */}
-            </InputGroup>
+                <Send size={16} aria-hidden="true" />
+              </button>
+            </div>
+
+            <FileUploadModal
+              kind={uploadKind}
+              open={Boolean(uploadKind)}
+              onOpenChange={(next) => !next && setUploadKind(null)}
+              handler={appendOwnMessage}
+            />
           </div>
         </>
       )}

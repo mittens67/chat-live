@@ -1,37 +1,22 @@
-import { ChatState } from "../../context/ChatProvider";
-import Button from "react-bootstrap/Button";
 import SingleChat from "../ui/SingleChat";
-import { useEffect } from "react";
 
-//import "../../styles/components/Chat/chatWindow.scss";
-import { FaArrowLeft } from "react-icons/fa";
-
-const ChatWindow = ({
-  fetchAgain,
-  setFetchAgain,
-  showChatWindow,
-  setShowChatWindow,
-}) => {
-  const { selectedChat } = ChatState();
-
+const ChatWindow = ({ setFetchAgain, showChatWindow, closeChatWindow }) => {
   return (
+    /**
+     * Tailwind visibility rather than Bootstrap's d-none/d-block, which are
+     * `display: ... !important` and would override the flex container.
+     *
+     * The mobile back button used to render as a sibling row above
+     * SingleChat, which read as two stacked header bars on small screens.
+     * It now lives inside SingleChat's own header (passed down as onBack),
+     * merging into one row.
+     */
     <div
-      style={{ height: "100%" }}
-      className={showChatWindow ? "d-block" : "d-none d-md-block"}
+      className={`chatWindow min-h-0 flex-col ${
+        showChatWindow ? "flex" : "hidden md:flex"
+      }`}
     >
-      <Button
-        data-toggle="tooltip"
-        title="Go Back To Chat List"
-        onClick={setShowChatWindow}
-        className="d-md-none chatWindow-btn"
-      >
-        <FaArrowLeft />
-      </Button>
-      <SingleChat
-        className="d-none"
-        fetchAgain={fetchAgain}
-        setFetchAgain={setFetchAgain}
-      />
+      <SingleChat setFetchAgain={setFetchAgain} onBack={closeChatWindow} />
     </div>
   );
 };

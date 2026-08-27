@@ -1,14 +1,28 @@
-import Col from "react-bootstrap/Col";
-import Button from "react-bootstrap/Button";
-//import "../../styles/components/ui/userBadgeItem.scss";
+import { DEFAULT_AVATAR, onAvatarError } from "../../lib/defaultAvatar";
 
-const UserBadgeItem = ({user, handler}) => {
+const UserBadgeItem = ({ user, handler, isAdmin }) => {
   return (
-    <Col className="userBadge-outer" xs={3}>
-        <span>{user.name}</span>
-        <Button className="userBadge-link" variant="link" onClick={handler}>X</Button>
-    </Col>
-  )
-}
+    <span className="userBadge">
+      <img
+        src={user.picture || DEFAULT_AVATAR}
+        onError={onAvatarError}
+        alt=""
+        className="userBadge-avatar"
+      />
+      <span className="truncate">{user.name}</span>
+      {isAdmin && <span className="userBadge-admin">Admin</span>}
+      {handler && (
+        <button
+          type="button"
+          className="userBadge-remove"
+          onClick={handler}
+          aria-label={`Remove ${user.name}`}
+        >
+          ×
+        </button>
+      )}
+    </span>
+  );
+};
 
-export default UserBadgeItem
+export default UserBadgeItem;

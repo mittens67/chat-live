@@ -1,146 +1,215 @@
 import { useState } from "react";
-import axios from "axios";
-import Button from "react-bootstrap/Button";
-import Modal from "react-bootstrap/Modal";
-import Form from "react-bootstrap/Form";
 import toast from "react-hot-toast";
+import { UploadCloud } from "lucide-react";
 import { ChatState } from "../../context/ChatProvider";
+import api, { errorMessage } from "../../lib/api";
+import {
+  uploadToCloudinary,
+  videoThumbnailUrl,
+  IMAGE_TYPES,
+  VIDEO_TYPES,
+  DOCUMENT_TYPES,
+} from "../../lib/cloudinary";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "./primitives/Dialog";
 
-const IMAGE = "image/";
-const FILE = ".xlsx,.xls,image/*,.doc, .docx,.ppt, .pptx,.txt,.pdf";
+const KIND_CONFIG = {
+  file: {
+    label: "File",
+    accept:
+      ".xlsx,.xls,.doc,.docx,.ppt,.pptx,.txt,.pdf,application/pdf,text/plain",
+    resourceType: "auto",
+    allowedTypes: DOCUMENT_TYPES,
+    messageType: "file",
+  },
+  image: {
+    label: "Image",
+    accept: "image/*",
+    resourceType: "image",
+    allowedTypes: IMAGE_TYPES,
+    messageType: "image",
+  },
+  video: {
+    label: "Video",
+    accept: "video/*",
+    resourceType: "video",
+    allowedTypes: VIDEO_TYPES,
+    messageType: "video",
+  },
+};
 
-const FileUploadModal = ({ children, title, handler }) => {
-  const [show, setShow] = useState(false);
+/**
+ * Controlled only - no internal trigger.
+ *
+ * This is opened from inside SingleChat's attachment DropdownMenu. Nesting a
+ * Dialog trigger inside an already-open dropdown menu is the one Radix
+ * combination that reliably fights over focus (the menu's own close-and-
+ * return-focus behaviour races the dialog's focus trap); the fix is for the
+ * parent to own `open` state and drive this directly, with no trigger
+ * element here for the two roots to contend over.
+ */
+const FileUploadModal = ({ kind, open, onOpenChange, handler }) => {
   const [loading, setLoading] = useState(false);
-  const [doc, setDoc] = useState();
+  const [progress, setProgress] = useState(0);
+  const [upload, setUpload] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [fileName, setFileName] = useState("");
+  const [dragActive, setDragActive] = useState(false);
 
-  const { selectedChat, user } = ChatState();
+  const { selectedChat } = ChatState();
+  const config = KIND_CONFIG[kind] ?? KIND_CONFIG.file;
 
-  const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
+  const reset = () => {
+    setUpload(null);
+    setPreview(null);
+    setFileName("");
+    setProgress(0);
+  };
 
-  const postDetails = (file, title) => {
+  const close = () => {
+    reset();
+    onOpenChange(false);
+  };
+
+  const postDetails = async (file) => {
+    if (!file) return;
+
+    reset();
+    setFileName(file.name);
+    //Local object URL, so the preview shows instantly rather than waiting on
+    //the upload round trip
+    if (kind === "image" || kind === "video") {
+      setPreview(URL.createObjectURL(file));
+    }
     setLoading(true);
 
-    if (file === undefined) {
-      toast.error("No File Provided");
-      setLoading(false);
-      return;
-    }
+    try {
+      const url = await uploadToCloudinary(file, {
+        resourceType: config.resourceType,
+        allowedTypes: config.allowedTypes,
+        onProgress: setProgress,
+      });
 
-    if (title === "File") {
-      //File Upload stuff
-      if (
-        file.type === "application/msword" ||
-        file.type === "application/vnd.ms-excel" ||
-        file.type === "application/vnd.ms-powerpoint" ||
-        file.type === "text/plain" ||
-        file.type === "application/pdf"
-      ) {
-        const data = new FormData();
-        data.append("file", file);
-        data.append("upload_preset", "chat-live");
-        data.append("cloud_name", "dwzam97oe");
-        fetch("https://api.cloudinary.com/v1_1/dwzam97oe/auto/upload", {
-          method: "post",
-          body: data,
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            setDoc(data.url.toString());
-            //console.log(data.url.toString());
-            setLoading(false);
-          })
-          .catch((err) => {
-            console.log(err);
-            setLoading(false);
-          });
-      } else {
-        //console.log(`File upload failure`);
-        toast.error("Failed to upload image!");
-        setLoading(false);
-        return;
-      }
-    } else {
-      //Image Upload stuff
-      if (file.type === "image/jpeg" || file.type === "image/png") {
-        const data = new FormData();
-        data.append("file", file);
-        data.append("upload_preset", "chat-live");
-        data.append("cloud_name", "dwzam97oe");
-        fetch("https://api.cloudinary.com/v1_1/dwzam97oe/image/upload", {
-          method: "post",
-          body: data,
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            setDoc(data.url.toString());
-            //console.log(data.url.toString());
-            setLoading(false);
-          })
-          .catch((err) => {
-            console.log(err);
-            setLoading(false);
-          });
-      } else {
-        //console.log(`image upload failure`);
-        toast.error("Failed to upload image!");
-        setLoading(false);
-        return;
-      }
+      setUpload({
+        url,
+        type: config.messageType,
+        //Metadata only, and only what is cheap to know client-side - no
+        //separate probe of the file just to fill in width/height/duration
+        attachment: {
+          mimeType: file.type,
+          bytes: file.size,
+          ...(kind === "video" ? { thumbnailUrl: videoThumbnailUrl(url) } : {}),
+        },
+      });
+    } catch (error) {
+      toast.error(error.message);
+      reset();
+    } finally {
+      setLoading(false);
     }
   };
-  const handleSendFile = async() => {
+
+  const handleDrop = (event) => {
+    event.preventDefault();
+    setDragActive(false);
+    postDetails(event.dataTransfer.files?.[0]);
+  };
+
+  const handleSendFile = async () => {
+    if (!upload) return;
+
     try {
-        //
-        const config = {
-            headers: {
-              "Content-type": "application/json",
-              Authorization: `Bearer ${user.token}`,
-            },
-          };
-          setDoc(); // This is async, so we should be good with sending post
-  
-          const { data } = await axios.post(
-            "/api/message",
-            {
-              content: doc,
-              chatId: selectedChat,
-            },
-            config
-          );
-        handler(data);
-        handleClose();
+      const { data } = await api.post("/message", {
+        content: upload.url,
+        type: upload.type,
+        attachment: upload.attachment,
+        chatId: selectedChat._id,
+      });
+
+      handler(data);
+      close();
     } catch (error) {
-        //
-        handleClose();
-        toast.error("Something went wrong with sending message");
+      close();
+      toast.error(errorMessage(error, "Could not send the file"));
     }
-  }
+  };
 
   return (
-    <>
-      <span onClick={handleShow}>{children}</span>
+    <Dialog open={open} onOpenChange={(next) => (next ? null : close())}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{`Upload ${config.label}`}</DialogTitle>
+        </DialogHeader>
 
-      <Modal show={show} centered onHide={handleClose}>
-        <Modal.Header closeButton className="border-0 text-center">
-          <Modal.Title className="w-100">{`Upload ${title}`}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="text-center w-100">
-          <Form.Control
+        <div
+          className="uploadDrop"
+          data-active={dragActive ? "" : undefined}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragActive(true);
+          }}
+          onDragLeave={() => setDragActive(false)}
+          onDrop={handleDrop}
+        >
+          <input
             type="file"
-            placeholder="Upload your picture"
-            accept={title === "File" ? FILE : IMAGE}
-            onChange={(e) => postDetails(e.target.files[0], title)}
+            aria-label={`Choose a ${config.label.toLowerCase()} to upload`}
+            accept={config.accept}
+            className="uploadDrop-input"
+            onChange={(e) => postDetails(e.target.files?.[0])}
           />
-        </Modal.Body>
-        <Modal.Footer>
-          <Button disabled={loading} onClick={handleSendFile}>Send</Button>
-        </Modal.Footer>
-      </Modal>
-    </>
+
+          {preview && kind === "image" && (
+            <img src={preview} alt="" className="uploadDrop-imagePreview" />
+          )}
+          {preview && kind === "video" && (
+            // Local preview only, muted so it cannot surprise-autoplay audio
+            <video
+              src={preview}
+              controls
+              muted
+              className="uploadDrop-imagePreview"
+            />
+          )}
+          {!preview && (
+            <>
+              <UploadCloud size={22} aria-hidden="true" />
+              <span className="uploadDrop-text">
+                Drag a {config.label.toLowerCase()} here, or click to browse
+              </span>
+            </>
+          )}
+
+          {fileName && <span className="uploadDrop-fileName">{fileName}</span>}
+        </div>
+
+        {loading && (
+          <div className="uploadDrop-progress">
+            <div
+              className="uploadDrop-progressBar"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        )}
+
+        <DialogFooter>
+          <button
+            type="button"
+            className="modal-btn"
+            disabled={loading || !upload}
+            onClick={handleSendFile}
+          >
+            {loading ? `Uploading… ${progress}%` : "Send"}
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 
 export default FileUploadModal;
-

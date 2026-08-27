@@ -1,43 +1,60 @@
-import { useState } from "react";
-import Button from "react-bootstrap/Button";
-import Modal from "react-bootstrap/Modal";
-import Image from "react-bootstrap/Image";
-import { FaEye } from "react-icons/fa";
-import { ChatState } from "../../context/ChatProvider";
-//import "../../styles/components/ui/modal.scss";
+import { Eye, Mail } from "lucide-react";
+import { DEFAULT_AVATAR, onAvatarError } from "../../lib/defaultAvatar";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "./primitives/Dialog";
 
-const ProfileModal = ({ user, children }) => {
-  const [show, setShow] = useState(false);
+/**
+ * Two modes, both real uses in this app:
+ *
+ * - Controlled (open/onOpenChange passed): triggered from inside Header's
+ *   account DropdownMenu. No trigger is rendered here - nesting a Dialog
+ *   trigger inside an open dropdown menu is the one Radix combination that
+ *   reliably fights over focus, so the menu item drives this directly.
+ * - Uncontrolled (neither passed): renders its own eye-icon trigger, used
+ *   standalone in a 1-1 chat header where there is no surrounding overlay to
+ *   conflict with.
+ */
+const ProfileModal = ({ user, open, onOpenChange }) => {
+  const isControlled = open !== undefined;
 
-  const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
-  const {darkTheme} = ChatState();
   return (
-    <>
-      {children ? (
-        <span onClick={handleShow}>{children}</span>
-      ) : (
-        <Button className="modal-btn" onClick={handleShow}>
-          <FaEye />
-        </Button>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label={`View ${user.name}'s profile`}
+          >
+            <Eye size={16} aria-hidden="true" />
+          </button>
+        </DialogTrigger>
       )}
 
-      <Modal show={show} centered onHide={handleClose} data-bs-theme={darkTheme? 'dark': ''}>
-        <Modal.Header closeButton className="border-0 text-center">
-          <Modal.Title className="w-100 modal-title">{user.name}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="text-center w-100">
-          <Image
-            src={user.picture}
-            alt={user.name}
-            style={{ width: "7rem" }}
-            roundedCircle
-            className="mb-5"
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{user.name}</DialogTitle>
+        </DialogHeader>
+
+        <div className="flex flex-col items-center gap-4 text-center">
+          <img
+            src={user.picture || DEFAULT_AVATAR}
+            onError={onAvatarError}
+            alt=""
+            className="h-28 w-28 rounded-full object-cover shadow-[0_0_0_3px_var(--c-border)]"
           />
-          <p><span className="modal-label">Email:</span> {user.email}</p>
-        </Modal.Body>
-      </Modal>
-    </>
+          <div className="flex w-full items-center gap-2 rounded-md bg-raised px-3 py-2 text-left text-sm">
+            <Mail size={16} aria-hidden="true" className="shrink-0 text-subtle" />
+            <span className="truncate">{user.email}</span>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 

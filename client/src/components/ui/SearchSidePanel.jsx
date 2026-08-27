@@ -1,129 +1,90 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { Search, SearchX, Users } from "lucide-react";
 import { ChatState } from "../../context/ChatProvider";
-import axios from "axios";
-import Button from "react-bootstrap/Button";
-import Col from "react-bootstrap/Col";
-import Container from "react-bootstrap/Container";
-import Row from "react-bootstrap/Row";
-import Offcanvas from "react-bootstrap/Offcanvas";
-import InputGroup from "react-bootstrap/InputGroup";
-import Form from "react-bootstrap/Form";
-import { FaSearch } from "react-icons/fa";
 
 import Loading from "./Loading";
 import UserListItem from "./UserListItem";
+import api, { errorMessage } from "../../lib/api";
+import { useUserSearch } from "../../lib/useUserSearch";
+import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "./primitives/Sheet";
 
-const SearchSidePanel = ({ user, children }) => {
-  const [show, setShow] = useState(false);
-  const [search, setSearch] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
-  const [loading, setLoading] = useState(false);
+const SearchSidePanel = ({ children }) => {
+  const [open, setOpen] = useState(false);
   const [loadingChat, setLoadingChat] = useState(false);
 
-  const { setSelectedChat, chats, setChats, darkTheme } = ChatState();
-
-  const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
-
-  const handleSearch = async () => {
-    if (!search) {
-      toast.error("Please enter a search term");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const config = {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
-      };
-
-      const { data } = await axios.get(`/api/user?search=${search}`, config);
-
-      setLoading(false);
-      setSearchResults(data);
-    } catch (err) {
-      toast.error("Something went wrong with searching");
-      setLoading(false);
-    }
-  };
+  const { openChat, chats, setChats } = ChatState();
+  const { query, setQuery, results, loading } = useUserSearch();
 
   const accessChat = async (userId) => {
-    try {
-      setLoadingChat(true);
-      const config = {
-        headers: {
-          "Content-type": "application/json",
-          Authorization: `Bearer ${user.token}`,
-        },
-      };
-      const { data } = await axios.post(`/api/chat`, { userId }, config);
-      //console.log(data);
+    setLoadingChat(true);
 
-      if (!chats.find((c) => c._id === data._id)) setChats([data, ...chats]);
-      setSelectedChat(data);
-      setLoadingChat(false);
-      handleClose();
+    try {
+      const { data } = await api.post("/chat", { userId });
+
+      //chats starts as null, so this used to throw if a result was clicked
+      //before the chat list had loaded
+      const existing = chats ?? [];
+      if (!existing.find((c) => c._id === data._id)) {
+        setChats([data, ...existing]);
+      }
+
+      openChat(data);
+      setOpen(false);
     } catch (err) {
-      toast.error("Something went wrong with getting the chat!");
-      console.log(err);
+      toast.error(errorMessage(err, "Could not open that chat"));
+    } finally {
       setLoadingChat(false);
     }
   };
 
   return (
-    <>
-      {children ? (
-        <span onClick={handleShow}>{children}</span>
-      ) : (
-        <Button variant="primary" onClick={handleShow}>
-          Launch
-        </Button>
-      )}
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>{children}</SheetTrigger>
 
-      <Offcanvas show={show} onHide={handleClose} data-bs-theme={darkTheme? 'dark': ''}>
-        <Offcanvas.Header closeButton>
-          <Offcanvas.Title className="sidePanel-title">Search Users</Offcanvas.Title>
-        </Offcanvas.Header>
-        <Offcanvas.Body>
-          <Container>
-            <Row className="pb-2">
-              <Col xs={12}>
-                <InputGroup className="sidePanel-search">
-                  <Form.Control
-                    placeholder="Search"
-                    aria-label="Search"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                  />
-                  <Button variant="outline-secondary" onClick={handleSearch}>
-                    <FaSearch />
-                  </Button>
-                </InputGroup>
-              </Col>
-            </Row>
-            {loading ? (
-              <Row>
-                <Col xs={12}>
-                  <Loading />
-                </Col>
-              </Row>
-            ) : (
-              searchResults?.map((result) => (
-                <UserListItem
-                  key={result?._id}
-                  user={result}
-                  handler={() => accessChat(result._id)}
-                />
-              ))
-            )}
-            {loadingChat && <Loading />}
-          </Container>
-        </Offcanvas.Body>
-      </Offcanvas>
-    </>
+      <SheetContent side="left">
+        <SheetHeader>
+          <SheetTitle>Search Users</SheetTitle>
+        </SheetHeader>
+
+        <div className="flex flex-col gap-3">
+          {/* Results come from a debounced hook now, so there is no search
+              button to press and Enter no longer does nothing */}
+          <div className="sidePanel-search">
+            <Search size={16} aria-hidden="true" className="text-subtle shrink-0" />
+            <input
+              placeholder="Search by name or email"
+              aria-label="Search users"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-subtle"
+            />
+          </div>
+
+          {loading || loadingChat ? (
+            <Loading />
+          ) : !query.trim() ? (
+            <div className="sidePanel-empty">
+              <Users size={28} aria-hidden="true" />
+              <p>Search by name or email to start a chat</p>
+            </div>
+          ) : results.length === 0 ? (
+            <div className="sidePanel-empty">
+              <SearchX size={28} aria-hidden="true" />
+              <p>No users found for &ldquo;{query.trim()}&rdquo;</p>
+            </div>
+          ) : (
+            results.map((result) => (
+              <UserListItem
+                key={result._id}
+                user={result}
+                handler={() => accessChat(result._id)}
+              />
+            ))
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 };
 

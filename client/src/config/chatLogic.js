@@ -1,65 +1,212 @@
-export const getSender = (loggedUser, users) => {
-  return users[0]._id === loggedUser._id ? users[1].name : users[0].name;
+/** The other participant in a one-to-one chat. */
+const otherUser = (loggedUser, users) => {
+  //Guarded: a malformed or single-participant chat used to throw here
+  if (!Array.isArray(users) || users.length === 0) return null;
+  if (users.length === 1) return users[0];
+  return users[0]._id === loggedUser?._id ? users[1] : users[0];
 };
 
-export const getSenderFull = (loggedUser, users) => {
-  return users[0]._id === loggedUser._id ? users[1] : users[0];
+export const getSender = (loggedUser, users) =>
+  otherUser(loggedUser, users)?.name ?? "Unknown";
+
+export const getSenderFull = (loggedUser, users) =>
+  otherUser(loggedUser, users) ?? {};
+
+/**
+ * Whether a message body is a link we should render as one.
+ *
+ * Requires an explicit http/https protocol. The previous pattern made the
+ * protocol optional, so ordinary text like "example.com" became a clickable
+ * link, and any other scheme (javascript:, data:) was a rendering hazard.
+ */
+export const isValidURL = (str) => {
+  if (typeof str !== "string") return false;
+
+  try {
+    const { protocol } = new URL(str.trim());
+    return protocol === "http:" || protocol === "https:";
+  } catch {
+    return false;
+  }
 };
 
-export const isSameSender = (messages, m, i, userId) => {
-  return (
-    i < messages.length - 1 &&
-    (messages[i + 1].sender._id !== m.sender._id ||
-      messages[i + 1].sender._id === undefined) &&
-    messages[i].sender._id !== userId
+const IMAGE_EXTENSIONS = /\.(jpe?g|png|gif|webp|avif)$/i;
+const VIDEO_EXTENSIONS = /\.(mp4|webm|mov|m4v)$/i;
+
+/** Whether a URL points at something we can render inline as an image. */
+export const isUrlImage = (str) => {
+  if (!isValidURL(str)) return false;
+
+  try {
+    return IMAGE_EXTENSIONS.test(new URL(str.trim()).pathname);
+  } catch {
+    return false;
+  }
+};
+
+/** Whether a URL points at something we can render inline as a video. */
+export const isUrlVideo = (str) => {
+  if (!isValidURL(str)) return false;
+
+  try {
+    return VIDEO_EXTENSIONS.test(new URL(str.trim()).pathname);
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Best-effort type for a message that arrived without one.
+ *
+ * Mirrors server/lib/messageTypes.js#inferTypeFromContent. Needed for rows
+ * written before the `type` field existed - a Mongoose default only applies
+ * to new documents, so those read back with `type: undefined` - and for any
+ * older client that has not been updated to send one yet.
+ */
+export const inferMessageType = (message) => {
+  if (message.type) return message.type;
+  if (isUrlImage(message.content)) return "image";
+  if (isUrlVideo(message.content)) return "video";
+  if (isValidURL(message.content)) return "file";
+  return "text";
+};
+
+/**
+ * Groups consecutive messages from the same sender, the way most chat UIs do:
+ * one avatar and name per run, tighter spacing between bubbles within it.
+ *
+ * Replaces the previous isSameSender/isLastMessage/isSameUser trio, whose
+ * three overlapping definitions of "grouped" fed a margin-arithmetic bubble
+ * layout (marginLeft: 33/0/"auto") instead of real flex alignment.
+ */
+export const isFirstInGroup = (messages, i) =>
+  i === 0 || messages[i - 1].sender._id !== messages[i].sender._id;
+
+export const isLastInGroup = (messages, i) =>
+  i === messages.length - 1 ||
+  messages[i + 1].sender._id !== messages[i].sender._id;
+
+/**
+ * Adds a message to a list in chronological order, deduping by id.
+ *
+ * Both the socket handler and the sender's own optimistic append used to do a
+ * blind `[...prev, message]`. That assumes messages arrive in the order they
+ * were sent, which network latency does not guarantee - two sends fired in
+ * quick succession can have their responses (or their socket deliveries)
+ * arrive in either order, silently reordering the conversation on screen.
+ * Inserting by `createdAt` - the timestamp Mongo assigns at persist time, the
+ * same field `allMessages` already sorts by - keeps the log correct
+ * regardless of arrival order.
+ */
+export const insertMessageInOrder = (messages, incoming) => {
+  if (messages.some((m) => m._id === incoming._id)) return messages;
+
+  const incomingTime = new Date(incoming.createdAt).getTime();
+  const index = messages.findIndex(
+    (m) => new Date(m.createdAt).getTime() > incomingTime
   );
+
+  if (index === -1) return [...messages, incoming];
+
+  return [...messages.slice(0, index), incoming, ...messages.slice(index)];
 };
 
-export const isLastMessage = (messages, i, userId) => {
-  return (
-    i === messages.length - 1 &&
-    messages[messages.length - 1].sender._id !== userId &&
-    messages[messages.length - 1].sender._id
-  );
+const timeFormatter = new Intl.DateTimeFormat(undefined, {
+  hour: "numeric",
+  minute: "2-digit",
+});
+
+/** e.g. "2:41 PM" in the viewer's own locale and hour cycle. */
+export const formatMessageTime = (isoString) => {
+  const date = new Date(isoString);
+  return Number.isNaN(date.getTime()) ? "" : timeFormatter.format(date);
 };
 
-export const isSameSenderMargin = (messages, m, i, userId) => {
+const shortDateFormatter = new Intl.DateTimeFormat(undefined, {
+  month: "short",
+  day: "numeric",
+});
 
+/**
+ * A chat list row's timestamp: the clock time for anything from today, a
+ * short date otherwise. Matches how most chat apps avoid "2:41 PM" going
+ * stale and misleading once it is no longer actually today.
+ */
+export const formatChatListTimestamp = (isoString) => {
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) return "";
 
-  if (
-    i < messages.length - 1 &&
-    messages[i + 1].sender._id === m.sender._id &&
-    messages[i].sender._id !== userId
-  )
-    return 33;
-  else if (
-    (i < messages.length - 1 &&
-      messages[i + 1].sender._id !== m.sender._id &&
-      messages[i].sender._id !== userId) ||
-    (i === messages.length - 1 && messages[i].sender._id !== userId)
-  )
-    return 0;
-  else return "auto";
+  const now = new Date();
+  const isToday =
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate();
+
+  return isToday ? timeFormatter.format(date) : shortDateFormatter.format(date);
 };
 
-export const isSameUser = (messages, m, i) => {
-  return i > 0 && messages[i - 1].sender._id === m.sender._id;
+const TYPE_PREVIEWS = {
+  image: "📷 Photo",
+  video: "🎥 Video",
+  file: "📎 File",
 };
 
-//Check to see if a string is a url
-export const isValidURL = function (str) {
-  var pattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
-    '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+ // domain name
-    '((\\d{1,3}\\.){3}\\d{1,3}))'+ // OR ip (v4) address
-    '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ // port and path
-    '(\\?[;&a-z\\d%_.~+=-]*)?'+ // query string
-    '(\\#[-a-z\\d_]*)?$','i'); // fragment locator
-  return !!pattern.test(str);
-}
+/**
+ * The one-line summary shown under a chat's name in the chat list.
+ *
+ * Text messages show their own content; attachments show a short label
+ * instead of the raw Cloudinary URL, which is meaningless at a glance.
+ */
+export const previewMessage = (message) => {
+  if (!message) return "No messages yet";
 
+  const type = inferMessageType(message);
+  if (type in TYPE_PREVIEWS) return TYPE_PREVIEWS[type];
 
-export const isUrlImage = function (str) {
-  let pattern = new RegExp(/\/\/(\S+?(?:jpe?g|png|gif))/ig);
-  return !!pattern.test(str);
+  return message.content;
+};
 
-}
+const MAX_LARGE_EMOJI = 6;
+//Intl.Segmenter clusters a ZWJ sequence (👨‍👩‍👧‍👦) or a skin-tone-modified
+//emoji into one grapheme already, so testing that each grapheme *starts with*
+//a pictographic or regional-indicator (flag) character is enough - no need to
+//hand-roll a ZWJ/variation-selector-aware regex.
+const EMOJI_GRAPHEME_START = /^(\p{Extended_Pictographic}|\p{Regional_Indicator})/u;
+const segmenter =
+  typeof Intl !== "undefined" && Intl.Segmenter
+    ? new Intl.Segmenter(undefined, { granularity: "grapheme" })
+    : null;
+
+/**
+ * Whether a text message is nothing but a handful of emoji, the common chat-
+ * app convention for rendering them large with no bubble. Capped at
+ * MAX_LARGE_EMOJI so a wall of pasted emoji does not blow up the layout.
+ */
+export const isEmojiOnlyMessage = (content) => {
+  if (typeof content !== "string" || !segmenter) return false;
+
+  const trimmed = content.trim();
+  if (!trimmed) return false;
+
+  const graphemes = [...segmenter.segment(trimmed)].map((s) => s.segment);
+  if (graphemes.length > MAX_LARGE_EMOJI) return false;
+
+  return graphemes.every((g) => EMOJI_GRAPHEME_START.test(g));
+};
+
+const SIZE_UNITS = ["B", "KB", "MB", "GB"];
+
+/** e.g. 2_500_000 -> "2.4 MB", for the file-attachment card. */
+export const formatFileSize = (bytes) => {
+  if (!bytes || bytes <= 0) return null;
+
+  let value = bytes;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < SIZE_UNITS.length - 1) {
+    value /= 1024;
+    unitIndex++;
+  }
+
+  const precision = unitIndex > 0 && value < 10 ? 1 : 0;
+  return `${value.toFixed(precision)} ${SIZE_UNITS[unitIndex]}`;
+};

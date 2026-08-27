@@ -1,122 +1,151 @@
-import Container from "react-bootstrap/Container";
-import Navbar from "react-bootstrap/Navbar";
-import Dropdown from "react-bootstrap/Dropdown";
-import Button from "react-bootstrap/Button";
-import Badge from "react-bootstrap/Badge";
-import { FaSearch, FaBell } from "react-icons/fa";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  Search,
+  Bell,
+  MessageCircle,
+  MessageSquare,
+  CircleUser,
+  Sun,
+  Moon,
+  LogOut,
+} from "lucide-react";
 
-//import "../../styles/components/ui/header.scss";
 import { ChatState } from "../../context/ChatProvider";
 import ProfileModal from "./ProfileModal";
-import { useNavigate } from "react-router-dom";
 import SearchSidePanel from "./SearchSidePanel";
 import { getSender } from "../../config/chatLogic";
+import { DEFAULT_AVATAR, onAvatarError } from "../../lib/defaultAvatar";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "./primitives/DropdownMenu";
 
 const Header = () => {
-  const {
-    setChats,
-    setSelectedChat,
-    setUser,
-    user,
-    notification,
-    setNotification,
-    darkTheme,
-    setDarkTheme,
-  } = ChatState();
+  const { user, logout, openChat, notification, darkTheme, setDarkTheme } =
+    ChatState();
   const navigate = useNavigate();
+  const [profileOpen, setProfileOpen] = useState(false);
 
-  const logoutHandler = (e) => {
-    e.preventDefault();
-    localStorage.removeItem("userInfo");
-    setUser();
-    setSelectedChat();
-    setChats(null);
+  const logoutHandler = () => {
+    //logout clears context and storage together; the socket provider tears the
+    //connection down when the user goes away
+    logout();
     navigate("/");
   };
 
   return (
-    <>
-      <Navbar expand="xs" className="header-nav">
-        <Container fluid>
-          <SearchSidePanel user={user}>
-            <Button
-              variant="link"
-              data-toggle="tooltip"
-              title="Search User"
-              className="header-btn"
+    <nav className="header-nav flex items-center justify-between px-4 py-2.5">
+      <SearchSidePanel>
+        <button type="button" title="Search User" className="header-btn">
+          <Search size={16} aria-hidden="true" />
+          <span className="header-btn__text">Search User</span>
+        </button>
+      </SearchSidePanel>
+
+      {/* Link, not a raw href - a raw href triggered a full page reload and a
+          fresh socket connection */}
+      <Link to="/chats" className="header-brand no-underline">
+        <span className="header-mark">
+          <MessageCircle size={16} aria-hidden="true" />
+        </span>
+        Chat Live
+      </Link>
+
+      <div className="header-container">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="header-dropdown"
+              aria-label={`Notifications (${notification.length} unread)`}
             >
-              <FaSearch />
-              <span className="header-btn__text">Search User</span>
-            </Button>
-          </SearchSidePanel>
-          <Navbar.Brand href="/chats" className="header-brand">
-            Chat Live
-          </Navbar.Brand>
-          <div className="header-container me-5">
-            {/* <Button variant="link" className="nav-btn"><FaBell /></Button> */}
-            <Dropdown>
-              <Dropdown.Toggle
-                className="header-dropdown"
-                variant="link"
-                id="dropdown-basic"
-              >
-                <FaBell />
-                <Badge
-                  bg={notification.length ? `danger` : `secondary`}
-                  variant="light"
-                >
-                  {notification.length}
-                </Badge>
-              </Dropdown.Toggle>
+              <Bell size={16} aria-hidden="true" />
+              {notification.length > 0 && (
+                <span className="header-badge">{notification.length}</span>
+              )}
+            </button>
+          </DropdownMenuTrigger>
 
-              <Dropdown.Menu style={{ position: "absolute" }}>
-                {!notification.length && "No New Messages"}
-                {notification.map((n) => (
-                  <Dropdown.Item
-                    key={n._id}
-                    onClick={() => {
-                      setSelectedChat(n.chat);
-                      setNotification(
-                        notification.filter((notif) => notif !== n)
-                      );
-                    }}
-                  >
-                    {n.chat.isGroupChat
-                      ? `New Message in ${n.chat.chatName}`
-                      : `New Message from ${getSender(user, n.chat.users)}`}
-                  </Dropdown.Item>
-                ))}
-              </Dropdown.Menu>
-            </Dropdown>
-            <Dropdown>
-              <Dropdown.Toggle
-                className="header-dropdown"
-                variant="link"
-                id="dropdown-basic"
+          <DropdownMenuContent>
+            {!notification.length && (
+              <DropdownMenuLabel>No new messages</DropdownMenuLabel>
+            )}
+            {notification.map((n) => (
+              <DropdownMenuItem
+                key={n._id}
+                //openChat clears every unread notification for this chat,
+                //not just the one that was clicked - previously reading a
+                //chat with several unread messages only dismissed one
+                onSelect={() => openChat(n.chat)}
+                className="flex items-center gap-2"
               >
-                <img
-                  src={user.picture}
-                  alt={`${user.name}`}
-                  className="avatar"
-                />
-              </Dropdown.Toggle>
+                <MessageSquare size={15} aria-hidden="true" className="shrink-0 text-subtle" />
+                <span className="truncate">
+                  {n.chat.isGroupChat
+                    ? `New message in ${n.chat.chatName}`
+                    : `New message from ${getSender(user, n.chat.users)}`}
+                </span>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-              <Dropdown.Menu style={{ position: "absolute", right: "10rem" }}>
-                <ProfileModal user={user}>
-                  <Dropdown.Item>My Profile</Dropdown.Item>
-                </ProfileModal>
-                <Dropdown.Divider />
-                <Dropdown.Item onClick={() => setDarkTheme(!darkTheme)}>
-                  Switch Theme
-                </Dropdown.Item>
-                <Dropdown.Divider />
-                <Dropdown.Item onClick={logoutHandler}>Log Out</Dropdown.Item>
-              </Dropdown.Menu>
-            </Dropdown>
-          </div>
-        </Container>
-      </Navbar>
-    </>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="header-dropdown"
+              aria-label="Account menu"
+            >
+              <img
+                src={user.picture || DEFAULT_AVATAR}
+                onError={onAvatarError}
+                alt={user.name}
+                className="avatar"
+              />
+            </button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent>
+            {/* Profile opens in controlled mode: this item is inside an open
+                dropdown, and nesting a Dialog trigger there is the one Radix
+                combination that reliably fights over focus. Driving `open`
+                directly sidesteps it entirely. */}
+            <DropdownMenuItem
+              onSelect={() => setProfileOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <CircleUser size={15} aria-hidden="true" className="shrink-0 text-subtle" />
+              My Profile
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onSelect={() => setDarkTheme(!darkTheme)}
+              className="flex items-center gap-2"
+            >
+              {darkTheme ? (
+                <Sun size={15} aria-hidden="true" className="shrink-0 text-subtle" />
+              ) : (
+                <Moon size={15} aria-hidden="true" className="shrink-0 text-subtle" />
+              )}
+              {darkTheme ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={logoutHandler} className="flex items-center gap-2">
+              <LogOut size={15} aria-hidden="true" className="shrink-0 text-subtle" />
+              Log Out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <ProfileModal user={user} open={profileOpen} onOpenChange={setProfileOpen} />
+    </nav>
   );
 };
 

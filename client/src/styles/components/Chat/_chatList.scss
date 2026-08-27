@@ -1,127 +1,131 @@
 .chatList {
   &-container {
-    max-height: calc(100vh - 5.5rem);
-    overflow-y: hidden;
-    padding: 0 1rem;
-    padding-bottom: 4rem;
-    // -ms-overflow-style: none; /* Internet Explorer 10+ */
-    //   scrollbar-width: none; /* Firefox */
-    //   &::-webkit-scrollbar {
-    //     display: none;  /* Safari and Chrome */
-    // }
+    //Fills its grid cell instead of `max-height: calc(100dvh - 5.5rem)` plus a
+    //4rem bottom padding fudge to keep the last row off the viewport edge
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    height: 100%;
+    min-height: 0;
+    padding: 0.75rem;
+    background-color: var(--c-surface);
   }
 
   &-scrollableRow {
-    height: 100%; // height is necessary for scroll to work
-    // change bootstrap defaults here to space items inside this window properly
+    //Was Bootstrap's <Row>, which supplied display:flex itself; now a plain
+    //div, so this has to say so explicitly
+    display: flex;
     flex-direction: column;
-    flex-wrap: nowrap;
+    min-height: 0;
 
     overflow-y: auto;
-    -ms-overflow-style: none; /* Internet Explorer 10+ */
-    scrollbar-width: thin; /* Firefox */
-    &::-webkit-scrollbar {
-      display: none; /* Safari and Chrome */
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--c-border) transparent;
+  }
+
+  &-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    height: 100%;
+    padding: 1.5rem;
+    text-align: center;
+    color: var(--c-muted);
+    font-size: var(--text-sm);
+
+    svg {
+      margin-bottom: 0.25rem;
+      color: var(--c-border);
     }
   }
 
   &-title {
-    font-weight: bold;
-    font-size: 1.5rem;
+    font-weight: 600;
+    font-size: var(--text-lg);
+    color: var(--c-text);
   }
 
+  //Was missing height/padding entirely - Tailwind's preflight zeroes a
+  //<button>'s default padding, so this rendered as bare text jammed flush
+  //against its own 1px border, icon-only form included.
   &-btn {
-    border: none;
-    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    height: 2.25rem;
+    padding: 0 0.875rem;
+    border: 1px solid var(--c-border);
+    border-radius: 999px;
+    background-color: var(--c-surface);
+    color: var(--c-text);
+    font-weight: 500;
+    font-size: var(--text-sm);
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+
+    &:hover {
+      background-color: var(--c-accent-subtle);
+      color: var(--c-text);
+      border-color: var(--c-accent);
+    }
+
+    &:active {
+      background-color: var(--c-border);
+    }
   }
+
   &-chat {
-    height: 4rem;
-    width: 95%;
-    margin: 0.2rem auto;
-    border-radius: 0.5rem;
+    height: 4.25rem;
+    width: 100%;
+    padding: 0 0.75rem;
+    border: none;
+    border-bottom: 1px solid var(--c-border);
     cursor: pointer;
-    font-weight: bold;
+    text-align: left;
     display: flex;
     align-items: center;
-  }
-}
+    gap: 0.625rem;
+    background-color: transparent;
+    color: var(--c-text);
+    transition: background-color 0.15s ease;
 
-.theme-light {
-  .chatList {
-    &-scrollableRow {
-      scrollbar-color: $color-primary $color-secondary;
+    &:hover {
+      background-color: var(--c-raised);
     }
 
-    &-title {
-      color: $color-accent;
-    }
-
-    &-btn {
-      background-color: $color-primary;
-      border: 0.1rem solid $color-secondary;
-
-      &:hover {
-        background-color: $color-secondary;
-        color: $color-accent;
-        border: 0.1rem solid $color-primary;
-      }
-    }
-    &-chat {
-      background-color: $color-tertiary;
-
-      &:hover {
-        background-color: $color-primary;
-        color: $color-white;
-      }
-    }
-
-    &-selected {
-      background-color: $color-secondary;
-
-      &:hover {
-        background-color: $color-secondary;
-      }
+    &:last-child {
+      border-bottom: none;
     }
   }
-}
 
-.theme-dark {
-  .chatList {
-    &-scrollableRow {
-      scrollbar-color: $color-primary $color-secondary;
+  //The selected row reads as selected in both themes now; it used to be a
+  //pale olive that vanished against the dark palette
+  &-selected {
+    background-color: var(--c-accent-subtle);
+    box-shadow: inset 3px 0 0 var(--c-accent);
+
+    &:hover {
+      background-color: var(--c-accent-subtle);
     }
+  }
 
-    &-title {
-      color: $color-tertiary;
-    }
+  &-avatar {
+    height: 2.75rem;
+    width: 2.75rem;
+    flex-shrink: 0;
+    border-radius: 50%;
+    object-fit: cover;
+  }
 
-    &-btn {
-      background-color: $color-secondary;
-      border: 0.1rem solid $color-primary;
-      color: $color-accent;
-
-      &:hover {
-        background-color: $color-primary;
-        color: $color-white;
-        border: 0.1rem solid $color-secondary;
-      }
-    }
-    &-chat {
-      background-color: $color-accent;
-      color: $color-white;
-
-      &:hover {
-        background-color: $color-secondary;
-        color: $color-black;
-      }
-    }
-
-    &-selected {
-      background-color: $color-primary;
-
-      &:hover {
-        background-color: $color-primary;
-      }
-    }
+  //Two cues for "unread", not color alone: this dot, plus the preview text
+  //below switching from muted to full-strength and semibold
+  &-unreadDot {
+    height: 0.5rem;
+    width: 0.5rem;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background-color: var(--c-accent);
   }
 }
