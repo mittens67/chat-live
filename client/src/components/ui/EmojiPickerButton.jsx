@@ -32,6 +32,7 @@ const EmojiPickerButton = ({ onSelect }) => {
           <EmojiPicker
             theme={darkTheme ? "dark" : "light"}
             onEmojiClick={(emojiData) => onSelect(emojiData.emoji)}
+            emojiStyle="native"
             skinTonesDisabled
             previewConfig={{ showPreview: false }}
             width={288}
