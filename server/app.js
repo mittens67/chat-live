@@ -29,7 +29,22 @@ const createApp = () => {
     app.set("trust proxy", 1);
   }
 
-  app.use(helmet());
+  //Attachments upload straight from the browser to api.cloudinary.com and
+  //are then displayed/played from res.cloudinary.com - both need an explicit
+  //carve-out, or the default CSP silently blocks every image, video, and file
+  //attachment while leaving the rest of the app looking fine.
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+          "img-src": ["'self'", "data:", "https://res.cloudinary.com"],
+          "media-src": ["'self'", "https://res.cloudinary.com"],
+          "connect-src": ["'self'", "https://api.cloudinary.com"],
+        },
+      },
+    })
+  );
   app.use(express.json({ limit: "100kb" }));
   app.use(
     cors({
